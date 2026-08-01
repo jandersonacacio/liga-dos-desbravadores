@@ -58,7 +58,7 @@
     a { color: inherit; }
 
     .mvp-float {
-      position: fixed;
+      position: absolute;
       z-index: 50;
       width: 132px;
       padding: 10px 12px;
@@ -1621,9 +1621,12 @@
       if (event.button !== undefined && event.button !== 0) return;
       dragging = true;
       moved = false;
+      // getBoundingClientRect() é relativo à janela (viewport); como o card agora
+      // usa position: absolute (fica preso ao documento, não acompanha o scroll),
+      // somamos o scroll atual para converter em coordenadas do documento.
       const rect = el.getBoundingClientRect();
-      startLeft = rect.left;
-      startTop = rect.top;
+      startLeft = rect.left + window.scrollX;
+      startTop = rect.top + window.scrollY;
       startX = event.clientX;
       startY = event.clientY;
       el.style.left = startLeft + 'px';
@@ -1640,8 +1643,8 @@
       const dy = event.clientY - startY;
       if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
       if (!moved) return;
-      const maxLeft = Math.max(4, window.innerWidth - el.offsetWidth - 4);
-      const maxTop = Math.max(4, window.innerHeight - el.offsetHeight - 4);
+      const maxLeft = Math.max(4, document.documentElement.scrollWidth - el.offsetWidth - 4);
+      const maxTop = Math.max(4, document.documentElement.scrollHeight - el.offsetHeight - 4);
       const newLeft = Math.min(Math.max(4, startLeft + dx), maxLeft);
       const newTop = Math.min(Math.max(4, startTop + dy), maxTop);
       el.style.left = newLeft + 'px';
