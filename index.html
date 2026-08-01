@@ -69,7 +69,9 @@
       backdrop-filter: blur(8px);
       color: #fff7dd;
       text-align: center;
-      cursor: pointer;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
       animation: floatBoss 5.5s ease-in-out infinite;
       opacity: .52;
       transition: opacity .2s ease, box-shadow .2s ease;
@@ -81,10 +83,17 @@
       outline: none;
     }
 
+    .mvp-float.is-dragging {
+      cursor: grabbing;
+      z-index: 250;
+      opacity: 1;
+      animation-play-state: paused;
+      transition: none;
+    }
+
     .mvp-float .sprite { display: grid; place-items: center; height: 82px; }
-    .mvp-float .sprite img { max-width: 88px; max-height: 82px; image-rendering: pixelated; filter: drop-shadow(0 5px 7px rgba(0,0,0,.45)); }
+    .mvp-float .sprite img { max-width: 88px; max-height: 82px; image-rendering: pixelated; filter: drop-shadow(0 5px 7px rgba(0,0,0,.45)); -webkit-user-drag: none; }
     .mvp-float strong { display: block; margin-top: 3px; font: 700 12px/1.15 Georgia, serif; }
-    .mvp-float small { color: var(--gold); font-size: 9px; letter-spacing: .12em; }
 
     .mvp-1 { top: 8%; left: 1.2%; transform: rotate(-5deg); }
     .mvp-2 { top: 37%; right: 1.1%; transform: rotate(5deg); animation-delay: -1.5s; }
@@ -647,7 +656,6 @@
       opacity: .72;
     }
     .mvp-float .sprite img { filter: drop-shadow(0 4px 6px rgba(81, 52, 24, 0.18)); }
-    .mvp-float small { color: #8e643c; }
 
     .hero {
       border: 1px solid rgba(128, 95, 61, 0.18);
@@ -961,10 +969,10 @@
 <button aria-label="Entrar com Google" class="auth-fab state-out" id="authButton" title="Entrar com Google" type="button">
 <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20"><path d="M12 12c2.485 0 4.5-2.015 4.5-4.5S14.485 3 12 3 7.5 5.015 7.5 7.5 9.515 12 12 12Zm0 2.25c-3.004 0-9 1.508-9 4.5V21h18v-2.25c0-2.992-5.996-4.5-9-4.5Z" fill="currentColor"></path></svg>
 </button>
-<div class="mvp-float mvp-1" data-slot="1" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong><small>MVP</small></div>
-<div class="mvp-float mvp-2" data-slot="2" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong><small>MVP</small></div>
-<div class="mvp-float mvp-3" data-slot="3" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong><small>MVP</small></div>
-<div class="mvp-float mvp-4" data-slot="4" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong><small>MVP</small></div>
+<div class="mvp-float mvp-1" data-slot="1" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
+<div class="mvp-float mvp-2" data-slot="2" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
+<div class="mvp-float mvp-3" data-slot="3" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
+<div class="mvp-float mvp-4" data-slot="4" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
 <main class="app">
 <nav aria-label="Alternar quadro" class="side-tabs">
 <button aria-pressed="true" class="side-tab active" data-tab="desbravadores" type="button">
@@ -1565,6 +1573,103 @@
   // e, ao clicar, levam até a posição da respectiva linha na página.
   const mvpFloatEls = [...document.querySelectorAll('.mvp-float')];
 
+  // Permite arrastar os cards flutuantes para o lado, caso estejam cobrindo
+  // algo que a pessoa queira ler. A posição escolhida fica salva só nesta
+  // aba/sessão do navegador (sessionStorage), voltando ao normal ao reabrir.
+  const MVP_POS_KEY = 'liga_mvp_float_positions';
+
+  function readMvpPositions() {
+    try {
+      return JSON.parse(sessionStorage.getItem(MVP_POS_KEY) || '{}');
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function saveMvpPosition(slot, left, top) {
+    try {
+      const all = readMvpPositions();
+      all[slot] = { left, top };
+      sessionStorage.setItem(MVP_POS_KEY, JSON.stringify(all));
+    } catch (error) {
+      // Armazenamento indisponível (ex.: modo privado); apenas ignora.
+    }
+  }
+
+  function applySavedMvpPosition(el, slot) {
+    const saved = readMvpPositions()[slot];
+    if (!saved) return;
+    el.style.left = saved.left + 'px';
+    el.style.top = saved.top + 'px';
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+  }
+
+  function makeMvpFloatDraggable(el) {
+    const slot = el.dataset.slot;
+    applySavedMvpPosition(el, slot);
+
+    let dragging = false;
+    let moved = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    el.addEventListener('pointerdown', (event) => {
+      if (event.button !== undefined && event.button !== 0) return;
+      dragging = true;
+      moved = false;
+      const rect = el.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+      startX = event.clientX;
+      startY = event.clientY;
+      el.style.left = startLeft + 'px';
+      el.style.top = startTop + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+      el.classList.add('is-dragging');
+      try { el.setPointerCapture(event.pointerId); } catch (error) { /* ignore */ }
+    });
+
+    el.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+      if (!moved) return;
+      const maxLeft = Math.max(4, window.innerWidth - el.offsetWidth - 4);
+      const maxTop = Math.max(4, window.innerHeight - el.offsetHeight - 4);
+      const newLeft = Math.min(Math.max(4, startLeft + dx), maxLeft);
+      const newTop = Math.min(Math.max(4, startTop + dy), maxTop);
+      el.style.left = newLeft + 'px';
+      el.style.top = newTop + 'px';
+    });
+
+    const endDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove('is-dragging');
+      if (moved) {
+        saveMvpPosition(slot, parseFloat(el.style.left), parseFloat(el.style.top));
+        el.dataset.suppressClick = '1';
+      }
+    };
+    el.addEventListener('pointerup', endDrag);
+    el.addEventListener('pointercancel', endDrag);
+
+    el.addEventListener('click', (event) => {
+      if (el.dataset.suppressClick === '1') {
+        el.dataset.suppressClick = '';
+        event.stopImmediatePropagation();
+        event.preventDefault();
+      }
+    }, true);
+  }
+
+  mvpFloatEls.forEach(makeMvpFloatDraggable);
+
   function pickRandom(arr, n) {
     const copy = arr.slice();
     for (let i = copy.length - 1; i > 0; i--) {
@@ -1596,8 +1701,6 @@
       floatImg.src = avatarImg.src;
       floatImg.alt = name;
       el.querySelector('strong').textContent = name;
-      const tagEl = el.querySelector('small');
-      if (tagEl) tagEl.textContent = boardKey === 'alemdolimite' ? 'Alvo' : 'MVP';
       el.setAttribute('aria-label', 'Ir até ' + name + ' na lista');
       el.style.visibility = 'visible';
 
