@@ -1534,6 +1534,20 @@
         auth.signOut();
         return;
       }
+
+      // O Google não permite a tela de login dentro de uma página incorporada
+      // (iframe), como acontece quando este site é embutido no Notion. Nesses
+      // casos o próprio Google força a navegação para fora, o que trava a
+      // incorporação numa página em branco. Por isso, quando detectamos que
+      // estamos dentro de um iframe, abrimos o site real numa aba nova para
+      // fazer o login por lá; a incorporação continua funcionando normalmente
+      // no modo local enquanto isso.
+      if (window.self !== window.top) {
+        showToast('Para entrar com o Google, abrimos o site em uma nova aba (o Google não permite login dentro de uma página incorporada).');
+        window.open(location.href, '_blank', 'noopener');
+        return;
+      }
+
       const provider = new firebase.auth.GoogleAuthProvider();
       authButton.disabled = true;
       auth.signInWithPopup(provider)
