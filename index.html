@@ -1750,7 +1750,7 @@
     if (!mvpFloatEls.length) return;
     const board = boards.find(b => b.key === boardKey);
     if (!board) return;
-    const candidates = board.rows.filter(row => row.querySelector('.boss-avatar'));
+    const candidates = board.rows.filter(row => row.querySelector('.boss-avatar img'));
     const picks = pickRandom(candidates, mvpFloatEls.length);
 
     mvpFloatEls.forEach((el, i) => {
