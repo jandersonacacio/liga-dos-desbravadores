@@ -618,37 +618,46 @@
 
     .element-balloon {
       position: absolute;
-      top: -25px;
+      bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
       z-index: 6;
       pointer-events: auto;
     }
     .element-balloon .balloon-swing {
-      display: block;
-      transform-origin: top center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform-origin: bottom center;
       animation: balloonSway 3.1s ease-in-out infinite;
-    }
-    .element-balloon .balloon-string {
-      display: block;
-      width: 1.5px;
-      height: 9px;
-      margin: 0 auto;
-      background: rgba(255,255,255,.38);
     }
     .element-balloon .balloon-body {
       display: grid;
       place-items: center;
-      width: 21px;
-      height: 21px;
-      margin: 1px auto 0;
-      border-radius: 50% 50% 50% 45%;
+      width: 20px;
+      height: 25px;
+      border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
       background: var(--balloon-color, #999);
       border: 1.5px solid rgba(0,0,0,.4);
-      box-shadow: 0 3px 7px rgba(0,0,0,.4);
-      font-size: 10px;
+      box-shadow: 0 3px 7px rgba(0,0,0,.4), inset -3px -3px 4px rgba(0,0,0,.18), inset 2px 2px 3px rgba(255,255,255,.3);
+      font-size: 9px;
       line-height: 1;
       cursor: default;
+    }
+    .element-balloon .balloon-knot {
+      width: 0;
+      height: 0;
+      margin-top: -1px;
+      border-left: 3px solid transparent;
+      border-right: 3px solid transparent;
+      border-top: 4px solid var(--balloon-color, #999);
+      filter: brightness(.82);
+    }
+    .element-balloon .balloon-string {
+      display: block;
+      width: 1.5px;
+      height: 12px;
+      background: rgba(255,255,255,.38);
     }
     @keyframes balloonSway {
       0%, 100% { transform: rotate(-9deg); }
@@ -1598,8 +1607,9 @@
         balloon.style.setProperty('--balloon-color', meta.color || '#999');
         balloon.innerHTML =
           '<span class="balloon-swing">' +
-            '<span class="balloon-string"></span>' +
             '<span class="balloon-body">' + (ELEMENT_ICON[meta.element] || '') + '</span>' +
+            '<span class="balloon-knot"></span>' +
+            '<span class="balloon-string"></span>' +
           '</span>';
         card.appendChild(balloon);
       }
