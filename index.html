@@ -1956,6 +1956,16 @@
       // gravação imediata e só então exibe “Salvo!” após a confirmação do servidor.
       note.addEventListener('input', () => scheduleSave('', null, false));
       note.addEventListener('blur', () => scheduleSave('', note, true));
+
+      // Clicar em qualquer parte da linha marca/desmarca a missão, exceto na
+      // caixa de observações e nos links (ícone do monstro e nomes com link).
+      row.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target === checkbox) return;
+        if (target.closest('.mission-note, .boss-avatar, .reward-link, a')) return;
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     });
 
     board.generalNotes.addEventListener('input', () => scheduleSave('', null, false));
