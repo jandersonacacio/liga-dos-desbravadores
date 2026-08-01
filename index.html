@@ -59,7 +59,7 @@
 
     .mvp-float {
       position: fixed;
-      z-index: 0;
+      z-index: 50;
       width: 132px;
       padding: 10px 12px;
       border: 1px solid rgba(244, 203, 111, 0.3);
@@ -495,7 +495,7 @@
 
     .toast.show { opacity: 1; translate: -50% 0; }
 
-    @media (max-width: 1850px) {
+    @media (max-width: 520px) {
       .mvp-float { display: none; }
     }
 
@@ -1300,7 +1300,7 @@
   }
 
   function createEmptyState() {
-    return { desbravadores: createEmptyBoardState(), instancias: createEmptyBoardState(), updatedAt: '' };
+    return { desbravadores: createEmptyBoardState(), instancias: createEmptyBoardState(), alemdolimite: createEmptyBoardState(), updatedAt: '' };
   }
 
   function normalizeState(value) {
@@ -1308,6 +1308,7 @@
     return {
       desbravadores: normalizeBoardState(source.desbravadores),
       instancias: normalizeBoardState(source.instancias),
+      alemdolimite: normalizeBoardState(source.alemdolimite),
       updatedAt: typeof source.updatedAt === 'string' ? source.updatedAt : ''
     };
   }
