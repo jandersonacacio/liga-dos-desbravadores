@@ -1232,6 +1232,12 @@
   let docRef = null;
   let auth = null;
   let isOwner = false;
+
+  // Modo de armazenamento da sessão atual:
+  // 'firestore' -> dono (jandersonacacio@gmail.com), banco compartilhado.
+  // 'local'     -> qualquer outra pessoa (logada ou não), apenas o navegador (temporário).
+  let storageMode = 'local';
+
   try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
@@ -1437,7 +1443,10 @@
 
   function updateAuthUi(user) {
     isOwner = Boolean(user && user.email === OWNER_EMAIL);
-    setEditingEnabled(isOwner);
+    storageMode = isOwner ? 'firestore' : 'local';
+
+    setEditingEnabled(true);
+
     if (!auth) {
       authButton.textContent = 'Login indisponível';
       authButton.disabled = true;
@@ -1445,9 +1454,17 @@
       authButton.textContent = 'Sair (' + user.email + ')';
     } else if (user) {
       authButton.textContent = 'Entrar com Google';
-      showToast('Esta conta não tem permissão de edição.');
+      showToast('Esta conta não tem permissão de edição na nuvem. Seus dados ficam salvos apenas neste navegador.');
     } else {
       authButton.textContent = 'Entrar com Google';
+    }
+  }
+
+  function syncForMode() {
+    if (storageMode === 'firestore') {
+      loadFirestoreBootstrap();
+    } else {
+      setSyncStatus('saved', 'Modo local: os dados ficam salvos apenas neste navegador.');
     }
   }
 
@@ -1470,9 +1487,12 @@
   }
 
   if (auth) {
-    auth.onAuthStateChanged(user => updateAuthUi(user));
+    auth.onAuthStateChanged(user => {
+      updateAuthUi(user);
+      syncForMode();
+    });
   } else {
-    setEditingEnabled(false);
+    setEditingEnabled(true);
   }
 
   const sideTabs = [...document.querySelectorAll('.side-tab')];
@@ -1638,10 +1658,6 @@
   }
 
   function scheduleSave(message = 'Alterações salvas.', feedbackControl = null, immediate = false) {
-    if (!isOwner) {
-      showToast('Entre com sua conta Google para salvar.');
-      return;
-    }
     collectStateFromUi();
     writeLocalBackup();
     boards.forEach(board => {
@@ -1652,9 +1668,15 @@
     changeVersion += 1;
     if (feedbackControl) queueFieldFeedback(feedbackControl, changeVersion);
 
-    setSyncStatus('saving', docRef ? 'Salvando...' : 'Aguardando conexão com o banco de dados...');
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => saveToFirestore(message), immediate ? 0 : 650);
+    if (storageMode === 'firestore') {
+      setSyncStatus('saving', docRef ? 'Salvando...' : 'Aguardando conexão com o banco de dados...');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveToFirestore(message), immediate ? 0 : 650);
+    } else {
+      settleFieldFeedback(changeVersion, 'saved');
+      setSyncStatus('saved', `Salvo no navegador às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}.`);
+      if (message) showToast(message);
+    }
   }
 
   function saveToFirestore(successMessage) {
@@ -1692,7 +1714,18 @@
 
   let unsubscribeSnapshot = null;
 
-  function loadBootstrap() {
+  function loadLocalPreview() {
+    const local = readLocalBackup();
+    if (local) {
+      state = normalizeState(local.state);
+      applyStateToUi();
+      setSyncStatus('saving', 'Cópia local carregada. Verificando conta...');
+    } else {
+      setSyncStatus('saving', 'Carregando dados...');
+    }
+  }
+
+  function loadFirestoreBootstrap() {
     const local = readLocalBackup();
     if (local) {
       state = normalizeState(local.state);
@@ -1718,7 +1751,7 @@
         applyStateToUi();
         writeLocalBackup();
 
-        if (localState && localTime > serverTime && isOwner) {
+        if (localState && localTime > serverTime) {
           setSyncStatus('saving', 'Enviando a cópia local mais recente...');
           saveToFirestore('Cópia local sincronizada.');
         } else {
@@ -1796,16 +1829,20 @@
 
     const resetBtn = document.getElementById(board.resetMemoryId);
     if (resetBtn) resetBtn.addEventListener('click', () => {
-      if (!isOwner) {
-        showToast('Entre com sua conta Google para limpar os dados.');
-        return;
-      }
       const confirmed = window.confirm('Limpar todas as marcações e observações desta aba? As demais abas não são afetadas.');
       if (!confirmed) return;
 
       state[board.key] = createEmptyBoardState();
       applyBoardToUi(board);
       writeLocalBackup();
+      state.updatedAt = new Date().toISOString();
+
+      if (storageMode !== 'firestore') {
+        setSyncStatus('saved', 'Dados locais limpos.');
+        showToast('Dados salvos foram limpos.');
+        return;
+      }
+
       setSyncStatus('saving', 'Limpando dados...');
 
       if (!docRef) {
@@ -1814,7 +1851,6 @@
       }
 
       suppressRemoteReload = true;
-      state.updatedAt = new Date().toISOString();
       docRef.set(state)
         .then(() => {
           writeLocalBackup();
@@ -1831,7 +1867,7 @@
 
   applyStateToUi();
   refreshFloatingMvps('desbravadores');
-  loadBootstrap();
+  loadLocalPreview();
 })();
 </script></body>
 </html>
