@@ -1990,9 +1990,12 @@
       provider.addScope(DRIVE_SCOPE);
       authButton.disabled = true;
 
-      const signInAction = needsDriveReconnect
-        ? auth.currentUser.reauthenticateWithPopup(provider)
-        : auth.signInWithPopup(provider);
+      // Antes usávamos currentUser.reauthenticateWithPopup() para "reconectar"
+      // quando já havia uma sessão salva. Na prática essa chamada às vezes volta
+      // sem credencial nenhuma (nem accessToken, nem providerId), então agora
+      // sempre usamos signInWithPopup — é o caminho confiável para conceder um
+      // escopo novo (Drive) mesmo com o usuário já logado.
+      const signInAction = auth.signInWithPopup(provider);
 
       signInAction
         .then(result => {
