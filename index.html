@@ -2000,6 +2000,20 @@
           driveFileId = null;
           updateAuthUi(auth.currentUser);
           syncForMode();
+          if (!driveAccessToken) {
+            // Diagnóstico: isso não deveria acontecer depois de um login/reconexão
+            // bem-sucedido. Registramos o máximo de detalhe possível (sem expor
+            // tokens sensíveis) para investigar a causa na próxima ocorrência.
+            console.warn('[Drive] login OK mas sem accessToken.', {
+              needsDriveReconnect,
+              operationType: result && result.operationType,
+              providerId: credential && credential.providerId,
+              signInMethod: credential && credential.signInMethod,
+              hasCredential: Boolean(credential),
+              credentialKeys: credential ? Object.keys(credential) : null,
+              userEmail: result && result.user && result.user.email
+            });
+          }
           if (!isOwner) {
             showToast(driveAccessToken
               ? 'Conectado! Seus dados serão salvos no seu Google Drive.'
