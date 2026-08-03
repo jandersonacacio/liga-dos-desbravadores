@@ -1544,6 +1544,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script async defer src="https://accounts.google.com/gsi/client"></script>
 <script>
 (() => {
   'use strict';
@@ -1552,6 +1553,12 @@
   const LOCAL_BACKUP_KEY = 'liga_desbravadores_backup_v3';
   const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
   const DRIVE_FILE_NAME = 'liga-dos-desbravadores-dados.json';
+  // Client ID OAuth (Web) criado automaticamente pelo Firebase para este
+  // projeto. Usado só para pedir o token de acesso ao Google Drive via
+  // Google Identity Services (GIS) — ver comentário grande mais abaixo,
+  // perto de requestDriveAccessToken(), explicando por que isso é
+  // necessário em vez de usar a credencial do próprio login do Firebase.
+  const GOOGLE_OAUTH_CLIENT_ID = '200706126383-sve6i5um03pj3rkam4ulhhj7jdqoapbc.apps.googleusercontent.com';
   const syncStatus = document.getElementById('syncStatus');
   const syncText = document.getElementById('syncText');
   const authButton = document.getElementById('authButton');
@@ -1983,47 +1990,45 @@
         return;
       }
 
-      const provider = new firebase.auth.GoogleAuthProvider();
-      // Escopo "drive.file": o app só enxerga os arquivos que ele mesmo cria
-      // na conta da pessoa (nunca o Drive inteiro). É usado só para quem não
-      // é o dono salvar um JSON próprio; para o dono, esse escopo fica sem uso.
-      provider.addScope(DRIVE_SCOPE);
       authButton.disabled = true;
 
-      // Antes usávamos currentUser.reauthenticateWithPopup() para "reconectar"
-      // quando já havia uma sessão salva. Na prática essa chamada às vezes volta
-      // sem credencial nenhuma (nem accessToken, nem providerId), então agora
-      // sempre usamos signInWithPopup — é o caminho confiável para conceder um
-      // escopo novo (Drive) mesmo com o usuário já logado.
-      const signInAction = auth.signInWithPopup(provider);
-
-      signInAction
-        .then(result => {
-          const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-          driveAccessToken = (credential && credential.accessToken) || null;
-          driveFileId = null;
+      // Conecta o Drive via Google Identity Services (GIS) — ver o comentário
+      // grande perto de requestDriveAccessToken() explicando por que não
+      // usamos mais a credencial devolvida pelo login do Firebase para isso.
+      function connectDrive() {
+        if (isOwner) {
           updateAuthUi(auth.currentUser);
           syncForMode();
-          if (!driveAccessToken) {
-            // Diagnóstico: isso não deveria acontecer depois de um login/reconexão
-            // bem-sucedido. Registramos o máximo de detalhe possível (sem expor
-            // tokens sensíveis) para investigar a causa na próxima ocorrência.
-            console.warn('[Drive] login OK mas sem accessToken.', {
-              needsDriveReconnect,
-              operationType: result && result.operationType,
-              providerId: credential && credential.providerId,
-              signInMethod: credential && credential.signInMethod,
-              hasCredential: Boolean(credential),
-              credentialKeys: credential ? Object.keys(credential) : null,
-              userEmail: result && result.user && result.user.email
-            });
-          }
-          if (!isOwner) {
+          return Promise.resolve();
+        }
+        return requestDriveAccessToken()
+          .then(token => {
+            driveAccessToken = token;
+            driveFileId = null;
+            updateAuthUi(auth.currentUser);
+            syncForMode();
             showToast(driveAccessToken
               ? 'Conectado! Seus dados serão salvos no seu Google Drive.'
               : 'Não foi possível conectar ao seu Google Drive agora. Os dados ficam salvos apenas neste navegador.');
-          }
-        })
+          })
+          .catch(error => {
+            console.error('[Drive] Falha ao obter token de acesso via Google Identity Services.', error);
+            updateAuthUi(auth.currentUser);
+            syncForMode();
+            showToast('Não foi possível conectar ao seu Google Drive agora. Os dados ficam salvos apenas neste navegador.');
+          });
+      }
+
+      // Se já está logado no Firebase e só falta (re)conectar o Drive, não
+      // precisa passar pelo login do Google de novo — só pede o token do Drive.
+      if (needsDriveReconnect) {
+        connectDrive().finally(() => { authButton.disabled = false; });
+        return;
+      }
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(() => connectDrive())
         .catch(error => {
           console.error('Falha no login.', error);
           showToast('Não foi possível entrar com o Google.');
@@ -2434,6 +2439,59 @@
   // ganha um arquivo JSON só dela, no próprio Drive dela, criado com o
   // escopo "drive.file" (o app só enxerga o que ele mesmo criou). Nada disso
   // passa pelo Firebase/Firestore do dono.
+  //
+  // O token de acesso ao Drive é pedido via Google Identity Services (GIS),
+  // não pela credencial que o login do Firebase devolve. Motivo: o Firebase
+  // usa um domínio próprio (liga-dos-desbravadores.firebaseapp.com) como
+  // intermediário para repassar essa credencial de volta para a página
+  // (jandersonacacio.github.io) — como são domínios diferentes, navegadores
+  // que bloqueiam armazenamento/cookies de terceiros quebram esse repasse:
+  // o login em si funciona (a pessoa aparece logada), mas o accessToken do
+  // Drive nunca chega. O GIS pede o token diretamente, sem passar por esse
+  // intermediário, então não sofre com esse bloqueio.
+
+  let gisTokenClient = null;
+
+  function ensureGisTokenClient() {
+    if (gisTokenClient) return gisTokenClient;
+    if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return null;
+    gisTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_OAUTH_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: () => {} // sobrescrito a cada chamada de requestDriveAccessToken()
+    });
+    return gisTokenClient;
+  }
+
+  function waitForGis(maxWaitMs = 4000) {
+    return new Promise((resolve, reject) => {
+      const startedAt = Date.now();
+      (function poll() {
+        const client = ensureGisTokenClient();
+        if (client) { resolve(client); return; }
+        if (Date.now() - startedAt >= maxWaitMs) { reject(new Error('gis-not-loaded')); return; }
+        setTimeout(poll, 150);
+      })();
+    });
+  }
+
+  function requestDriveAccessToken() {
+    return waitForGis().then(client => new Promise((resolve, reject) => {
+      client.callback = response => {
+        if (response && response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+        resolve((response && response.access_token) || null);
+      };
+      client.error_callback = error => reject(error || new Error('gis-error'));
+      try {
+        client.requestAccessToken({ prompt: '' });
+      } catch (error) {
+        reject(error);
+      }
+    }));
+  }
 
   function handleDriveAuthExpired(message) {
     driveAccessToken = null;
