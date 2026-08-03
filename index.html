@@ -1976,7 +1976,7 @@
     const feedback = createFeedbackForControl(saveBtn, options.feedbackClass || 'note-save-feedback');
 
     function refreshEmptyState() {
-      const hasContent = view.innerHTML.trim().length > 0;
+      const hasContent = view.textContent.trim().length > 0;
       view.classList.toggle('is-empty', !hasContent);
       if (!hasContent) view.textContent = options.placeholder || 'Sem observações.';
       editBtn.textContent = hasContent ? 'Editar' : 'Criar nota';
