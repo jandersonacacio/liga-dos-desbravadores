@@ -1333,6 +1333,70 @@
     justify-self: start;
     margin-top: -12px;
   }
+  .note-widget { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+  .note-view {
+    min-height: 22px;
+    padding: 6px 2px;
+    line-height: 1.45;
+    text-align: justify;
+    color: #2f2318;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .note-view.is-empty { color: #9c8a72; font-style: italic; }
+  .note-view a { color: #9e6d3d; text-decoration: underline; }
+  .note-editor {
+    min-height: 58px;
+    padding: 8px 9px;
+    border: 1px solid rgba(158,109,61,.4);
+    border-radius: 10px;
+    background: rgba(255,255,255,.96);
+    outline: none;
+    line-height: 1.45;
+    text-align: justify;
+    color: #2f2318;
+  }
+  .note-editor:focus { border-color: #9e6d3d; box-shadow: 0 0 0 3px rgba(158,109,61,.10); }
+  .note-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+  .note-toolbar button[data-cmd] {
+    min-width: 26px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(128,95,61,.3);
+    background: #fff;
+    color: #4a3826;
+    font-size: 11.5px;
+    font-family: inherit;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .note-toolbar button[data-cmd]:hover { background: #f4ecdf; }
+  .note-colors { display: inline-flex; gap: 4px; margin-left: 4px; padding-left: 6px; border-left: 1px solid rgba(128,95,61,.25); }
+  .note-colors button {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,.25);
+    cursor: pointer;
+    padding: 0;
+  }
+  .note-actions { display: flex; gap: 8px; }
+  .note-edit-btn, .note-save-btn {
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(158,109,61,.4);
+    background: #fff;
+    color: #6b4421;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .note-edit-btn:hover { background: #f4ecdf; }
+  .note-save-btn { background: #9e6d3d; color: #fff; border-color: #9e6d3d; }
+  .note-save-btn:hover { background: #8a5e35; }
   .field-saving-outline {
     border-color: #b48b62 !important;
     box-shadow: 0 0 0 3px rgba(180,139,98,.10) !important;
@@ -1806,6 +1870,204 @@
     return feedback;
   }
 
+  // Mini editor de texto rico para as caixas de observação (por missão e
+  // anotações gerais). Guarda o conteúdo como HTML sanitizado (permitindo
+  // só negrito, sublinhado, listas, cor do texto e links), sempre exibido
+  // fechado/justificado depois de salvo, com botão para reabrir a edição.
+  const NOTE_ALLOWED_TAGS = new Set(['B', 'STRONG', 'U', 'I', 'EM', 'OL', 'UL', 'LI', 'BR', 'A', 'SPAN', 'DIV', 'P']);
+
+  function sanitizeNoteHtml(html) {
+    const container = document.createElement('div');
+    container.innerHTML = html || '';
+
+    function cleanChildren(node) {
+      [...node.childNodes].forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE) return;
+        if (child.nodeType !== Node.ELEMENT_NODE) { child.remove(); return; }
+        const tag = child.tagName;
+        if (!NOTE_ALLOWED_TAGS.has(tag)) {
+          while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
+          child.remove();
+          return;
+        }
+        [...child.attributes].forEach(attr => {
+          const name = attr.name.toLowerCase();
+          if (tag === 'A' && name === 'href') return;
+          if (name === 'style') {
+            const colorMatch = attr.value.match(/color\s*:\s*(#[0-9a-fA-F]{3,8}|rgb\([^)]*\)|[a-zA-Z]+)/);
+            if (colorMatch) child.setAttribute('style', `color:${colorMatch[1]}`);
+            else child.removeAttribute('style');
+            return;
+          }
+          child.removeAttribute(attr.name);
+        });
+        if (tag === 'A') {
+          const href = (child.getAttribute('href') || '').trim();
+          if (!/^(https?:|mailto:)/i.test(href)) {
+            while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
+            child.remove();
+            return;
+          }
+          child.setAttribute('href', href);
+          child.setAttribute('target', '_blank');
+          child.setAttribute('rel', 'noopener noreferrer');
+        }
+        cleanChildren(child);
+      });
+    }
+    cleanChildren(container);
+    return container.innerHTML.trim();
+  }
+
+  function createNoteWidget(originalTextarea, options = {}) {
+    const ariaLabel = options.ariaLabel || 'Observação';
+    const initialValue = originalTextarea.value || '';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'note-widget';
+
+    const view = document.createElement('div');
+    view.className = 'note-view';
+    view.setAttribute('aria-label', ariaLabel);
+
+    const editor = document.createElement('div');
+    editor.className = 'note-editor';
+    editor.contentEditable = 'true';
+    editor.hidden = true;
+    editor.setAttribute('aria-label', ariaLabel + ' (editando)');
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'note-toolbar';
+    toolbar.hidden = true;
+    toolbar.innerHTML =
+      '<button type="button" data-cmd="bold" title="Negrito"><b>N</b></button>' +
+      '<button type="button" data-cmd="underline" title="Sublinhado"><u>S</u></button>' +
+      '<button type="button" data-cmd="insertOrderedList" title="Lista numerada">1.</button>' +
+      '<button type="button" data-cmd="insertUnorderedList" title="Lista com marcadores">\u2022</button>' +
+      '<button type="button" data-cmd="link" title="Inserir link">\ud83d\udd17</button>' +
+      '<span class="note-colors">' +
+      '<button type="button" data-color="#2b2118" title="Preto" style="background:#2b2118"></button>' +
+      '<button type="button" data-color="#c0392b" title="Vermelho" style="background:#c0392b"></button>' +
+      '<button type="button" data-color="#2f6fd6" title="Azul" style="background:#2f6fd6"></button>' +
+      '<button type="button" data-color="#2fa84f" title="Verde" style="background:#2fa84f"></button>' +
+      '<button type="button" data-color="#e0a716" title="Amarelo" style="background:#e0a716"></button>' +
+      '</span>';
+
+    const actions = document.createElement('div');
+    actions.className = 'note-actions';
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'note-edit-btn';
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'note-save-btn';
+    saveBtn.textContent = 'Salvar';
+    saveBtn.hidden = true;
+    actions.appendChild(editBtn);
+    actions.appendChild(saveBtn);
+
+    wrapper.appendChild(view);
+    wrapper.appendChild(editor);
+    wrapper.appendChild(toolbar);
+    wrapper.appendChild(actions);
+
+    originalTextarea.replaceWith(wrapper);
+
+    const feedback = createFeedbackForControl(saveBtn, options.feedbackClass || 'note-save-feedback');
+
+    function refreshEmptyState() {
+      const hasContent = view.innerHTML.trim().length > 0;
+      view.classList.toggle('is-empty', !hasContent);
+      if (!hasContent) view.textContent = options.placeholder || 'Sem observações.';
+      editBtn.textContent = hasContent ? 'Editar' : 'Criar nota';
+    }
+
+    function setValue(html) {
+      const clean = sanitizeNoteHtml(html);
+      view.innerHTML = clean;
+      refreshEmptyState();
+    }
+
+    function getValue() {
+      return view.classList.contains('is-empty') ? '' : view.innerHTML.trim();
+    }
+
+    function enterEdit() {
+      editor.innerHTML = view.classList.contains('is-empty') ? '' : view.innerHTML;
+      view.hidden = true;
+      editor.hidden = false;
+      toolbar.hidden = false;
+      editBtn.hidden = true;
+      saveBtn.hidden = false;
+      editor.focus();
+    }
+
+    function exitEdit(save) {
+      if (save) setValue(editor.innerHTML);
+      editor.hidden = true;
+      toolbar.hidden = true;
+      view.hidden = false;
+      editBtn.hidden = false;
+      saveBtn.hidden = true;
+    }
+
+    editBtn.addEventListener('click', enterEdit);
+    saveBtn.addEventListener('click', () => {
+      exitEdit(true);
+      if (options.onSave) options.onSave(saveBtn);
+    });
+
+    toolbar.querySelectorAll('button[data-cmd]').forEach(btn => {
+      btn.addEventListener('mousedown', event => event.preventDefault());
+      btn.addEventListener('click', () => {
+        editor.focus();
+        const cmd = btn.dataset.cmd;
+        if (cmd === 'link') {
+          const url = window.prompt('Endereço do link (https://...)');
+          if (!url) return;
+          const trimmed = url.trim();
+          if (!/^https?:\/\//i.test(trimmed) && !/^mailto:/i.test(trimmed)) {
+            window.alert('Use um link começando com http:// ou https://');
+            return;
+          }
+          document.execCommand('createLink', false, trimmed);
+        } else {
+          document.execCommand(cmd, false, null);
+        }
+      });
+    });
+
+    toolbar.querySelectorAll('button[data-color]').forEach(btn => {
+      btn.addEventListener('mousedown', event => event.preventDefault());
+      btn.addEventListener('click', () => {
+        editor.focus();
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+        const range = sel.getRangeAt(0);
+        const span = document.createElement('span');
+        span.style.color = btn.dataset.color;
+        try {
+          range.surroundContents(span);
+        } catch (error) {
+          document.execCommand('foreColor', false, btn.dataset.color);
+        }
+      });
+    });
+
+    setValue(initialValue);
+
+    return {
+      wrapper,
+      getValue,
+      setValue,
+      disable(disabled) {
+        editBtn.disabled = disabled;
+        saveBtn.disabled = disabled;
+        editor.contentEditable = disabled ? 'false' : 'true';
+      }
+    };
+  }
+
   function setFieldFeedback(feedback, type, message, control = null) {
     if (!feedback) return;
     const previousTimer = feedbackTimers.get(feedback);
@@ -1858,7 +2120,6 @@
       rows: [...document.querySelectorAll(opts.rowsSelector)],
       searchInput: document.getElementById(opts.searchInputId),
       toggleCompletedButton: document.getElementById(opts.toggleId),
-      generalNotes: document.getElementById(opts.generalNotesId),
       markVisibleId: opts.markVisibleId,
       unmarkAllId: opts.unmarkAllId,
       resetMemoryId: opts.resetMemoryId,
@@ -1871,9 +2132,21 @@
     };
     board.rows.forEach(row => {
       createFeedbackForControl(row.querySelector('.quest-check'), 'checkbox-save-feedback');
-      createFeedbackForControl(row.querySelector('.mission-note'), 'note-save-feedback');
+      const noteTextarea = row.querySelector('.mission-note');
+      row.noteWidget = createNoteWidget(noteTextarea, {
+        ariaLabel: noteTextarea.getAttribute('aria-label') || 'Observação',
+        placeholder: 'Sem observações.',
+        feedbackClass: 'note-save-feedback',
+        onSave: saveBtn => scheduleSave('Observação salva.', saveBtn, true)
+      });
     });
-    createFeedbackForControl(board.generalNotes, 'general-save-feedback');
+    const generalTextarea = document.getElementById(opts.generalNotesId);
+    board.generalNoteWidget = createNoteWidget(generalTextarea, {
+      ariaLabel: 'Anotações gerais',
+      placeholder: 'Sem anotações gerais.',
+      feedbackClass: 'general-save-feedback',
+      onSave: saveBtn => scheduleSave('Anotações gerais salvas.', saveBtn, true)
+    });
     return board;
   }
 
@@ -2005,9 +2278,9 @@
     boards.forEach(board => {
       board.rows.forEach(row => {
         row.querySelector('.quest-check').disabled = !enabled;
-        row.querySelector('.mission-note').disabled = !enabled;
+        if (row.noteWidget) row.noteWidget.disable(!enabled);
       });
-      board.generalNotes.disabled = !enabled;
+      if (board.generalNoteWidget) board.generalNoteWidget.disable(!enabled);
       [board.toggleCompletedButton, document.getElementById(board.markVisibleId), document.getElementById(board.unmarkAllId), document.getElementById(board.resetMemoryId)].forEach(btn => {
         if (btn) btn.disabled = !enabled;
       });
@@ -2320,12 +2593,11 @@
     board.rows.forEach(row => {
       const id = row.dataset.id;
       const checkbox = row.querySelector('.quest-check');
-      const note = row.querySelector('.mission-note');
       checkbox.checked = Boolean(boardState.completed[id]);
-      note.value = boardState.notes[id] || '';
+      if (row.noteWidget) row.noteWidget.setValue(boardState.notes[id] || '');
       row.classList.toggle('is-done', checkbox.checked);
     });
-    board.generalNotes.value = boardState.generalNotes || '';
+    if (board.generalNoteWidget) board.generalNoteWidget.setValue(boardState.generalNotes || '');
     board.toggleCompletedButton.textContent = boardState.ui.hideCompleted ? 'Mostrar concluídas' : 'Ocultar concluídas';
     updateBoardStats(board);
     applyBoardFilter(board);
@@ -2338,13 +2610,13 @@
     board.rows.forEach(row => {
       const id = row.dataset.id;
       const checkbox = row.querySelector('.quest-check');
-      const noteValue = row.querySelector('.mission-note').value.trim();
+      const noteValue = row.noteWidget ? row.noteWidget.getValue().trim() : '';
       if (checkbox.checked) completed[id] = true;
       if (noteValue) notes[id] = noteValue;
     });
     boardState.completed = completed;
     boardState.notes = notes;
-    boardState.generalNotes = board.generalNotes.value;
+    boardState.generalNotes = board.generalNoteWidget ? board.generalNoteWidget.getValue() : '';
   }
 
   function updateBoardStats(board) {
@@ -2736,7 +3008,6 @@
   boards.forEach(board => {
     board.rows.forEach(row => {
       const checkbox = row.querySelector('.quest-check');
-      const note = row.querySelector('.mission-note');
 
       checkbox.addEventListener('change', () => {
         row.classList.toggle('is-done', checkbox.checked);
@@ -2746,25 +3017,8 @@
           true
         );
       });
-
-      // Enquanto digita, mantém a cópia atualizada. Ao clicar fora, força a
-      // gravação imediata e só então exibe “Salvo!” após a confirmação do servidor.
-      note.addEventListener('input', () => scheduleSave('', null, false));
-      note.addEventListener('blur', () => scheduleSave('', note, true));
-
-      // Clicar em qualquer parte da linha marca/desmarca a missão, exceto na
-      // caixa de observações e nos links (ícone do monstro e nomes com link).
-      row.addEventListener('click', (event) => {
-        const target = event.target;
-        if (target === checkbox) return;
-        if (target.closest('.mission-note, .boss-avatar, .reward-link, a')) return;
-        checkbox.checked = !checkbox.checked;
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-      });
     });
 
-    board.generalNotes.addEventListener('input', () => scheduleSave('', null, false));
-    board.generalNotes.addEventListener('blur', () => scheduleSave('', board.generalNotes, true));
     board.searchInput.addEventListener('input', () => applyBoardFilter(board));
 
     board.toggleCompletedButton.addEventListener('click', () => {
