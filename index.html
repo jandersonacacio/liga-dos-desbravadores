@@ -1606,7 +1606,7 @@
   }
 
   function createEmptyState() {
-    return { desbravadores: createEmptyBoardState(), instancias: createEmptyBoardState(), alemdolimite: createEmptyBoardState(), updatedAt: '' };
+    return { desbravadores: createEmptyBoardState(), instancias: createEmptyBoardState(), alemdolimite: createEmptyBoardState(), passe: createEmptyBoardState(), updatedAt: '' };
   }
 
   function normalizeState(value) {
@@ -1615,6 +1615,7 @@
       desbravadores: normalizeBoardState(source.desbravadores),
       instancias: normalizeBoardState(source.instancias),
       alemdolimite: normalizeBoardState(source.alemdolimite),
+      passe: normalizeBoardState(source.passe),
       updatedAt: typeof source.updatedAt === 'string' ? source.updatedAt : ''
     };
   }
