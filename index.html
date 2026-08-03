@@ -562,6 +562,15 @@
 
     .confirm-ok:hover { filter: brightness(1.08); }
 
+    /* Detecta o APARELHO (celular/tablet com toque), não a largura da janela.
+       Some com os cards flutuantes e o ícone de espadas em qualquer celular ou
+       tablet, mesmo se a página estiver larga (ex.: tablet ou celular deitado),
+       diferente do bloco abaixo que só reage à largura da tela. */
+    @media (hover: none) and (pointer: coarse) {
+      .mvp-float { display: none !important; }
+      .hero::after { display: none; }
+    }
+
     @media (max-width: 760px) {
       /* Reconhecimento de dispositivo móvel via viewport (funciona em qualquer
          navegador/aparelho: Chrome ou Safari, Android ou iPhone) — mantém o
@@ -574,7 +583,7 @@
       .hero::after { font-size: 100px; }
       .eyebrow { font-size: 10px; }
       h1 { font-size: clamp(24px, 8vw, 32px); }
-      .subtitle { font-size: 12.5px; }
+      .subtitle { font-size: 12.5px; text-align: justify; }
       .stats { grid-template-columns: 1fr 1fr; gap: 8px; }
       .stat { padding: 10px 12px; }
       .stat span { font-size: 9.5px; }
@@ -609,6 +618,7 @@
       .quest-check::after { font-size: 21px; }
 
       .instance { font-size: 15.5px; }
+      .mission { text-align: justify; }
       .boss { min-width: 0; margin-top: 3px; gap: 8px; }
       .boss-name { font-size: 12.5px; }
       .boss-note { font-size: 9px; }
@@ -616,6 +626,12 @@
       .reward::before { color: var(--muted); font-weight: 600; margin-right: 6px; }
       .points::before { content: "Fichas: "; }
       .exp::before { content: "EXP: "; }
+
+      /* Textos justificados para não ficarem com bordas desalinhadas em telas estreitas
+         (footer-note e site-credit ficam de fora: são centralizados de propósito) */
+      .confirm-message,
+      .pool-subnote,
+      .combo-note { text-align: justify; }
 
       /* Alternativa visual mais compacta: cada sprite ocupa a largura toda,
          empilhado, em vez de tentar caber lado a lado como no computador */
