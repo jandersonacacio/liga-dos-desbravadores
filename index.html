@@ -1479,6 +1479,7 @@
     z-index: 30;
   }
   .note-color-menu[hidden] { display: none; }
+  .note-color-menu--right { left: auto; right: 0; }
   .note-color-menu button {
     box-sizing: border-box;
     flex: none;
@@ -2361,6 +2362,13 @@
         const wasHidden = menu.hidden;
         closeAllMenus();
         menu.hidden = !wasHidden;
+        if (!menu.hidden) {
+          menu.classList.remove('note-color-menu--right');
+          const rect = menu.getBoundingClientRect();
+          if (rect.right > window.innerWidth - 8) {
+            menu.classList.add('note-color-menu--right');
+          }
+        }
       });
     });
 
@@ -2948,6 +2956,74 @@
     });
   }
 
+  // Pares de missões que representam a MESMA instância/alvo, uma vez na aba
+  // Desbravadores e outra na aba Instâncias. Marcar uma marca a outra também,
+  // já que concluir uma significa que a outra também foi concluída.
+  const LINK_PAIRS = [
+    ['a-orcs', 'i-batalha-dos-orcs'],
+    ['a-torneio', 'i-torneio-de-magia'],
+    ['a-sarah', 'i-memorias-de-sarah'],
+    ['a-palacio', 'i-palacio-das-magoas'],
+    ['a-ymir', 'i-ep16-1-salao-de-ymir'],
+    ['a-hospital', 'i-hospital-abandonado'],
+    ['a-charleston', 'i-ep15-0-aos-pes-do-rei'],
+    ['a-fabrica', 'i-fabrica-do-terror'],
+    ['a-fabrica', 'i-fabrica-infantil'],
+    ['a-sonho', 'i-sonho-sombrio'],
+    ['a-vermes', 'i-covil-de-vermes'],
+    ['b-sala', 'i-ep15-0-sala-final'],
+    ['b-nidhogg', 'i-ep13-1-ninho-de-nidhogg'],
+    ['b-bakonawa', 'i-lago-de-bakonawa'],
+    ['b-buwaya', 'i-caverna-de-buwaya'],
+    ['b-glastheim', 'i-glastheim-sombria'],
+    ['b-sarah-fenrir', 'i-sarah-vs-fenrir'],
+    ['b-torre', 'i-torre-do-demonio'],
+    ['b-bios', 'i-ep14-3-ilha-bios'],
+    ['b-morroc', 'i-ep14-3-templo-do-demonio-rei'],
+    ['b-werner--3826', 'i-ep16-2-laboratorio-werner--3826'],
+    ['b-werner--3621', 'i-ep16-2-laboratorio-werner--3621'],
+    ['c-porings', 'i-vila-dos-porings'],
+    ['c-polvo', 'i-caverna-do-polvo'],
+    ['c-quarto', 'i-edda-do-quarto-crescente'],
+    ['c-os', 'i-ep17-1-missao-os'],
+    ['c-maldicao', 'i-maldicao-de-glastheim'],
+    ['c-base', 'i-ep16-2-base-militar'],
+    ['c-wolfchev--1647', 'i-laboratorio-de-wolfchev--1647'],
+    ['c-wolfchev--1648', 'i-laboratorio-de-wolfchev--1648'],
+    ['c-wolfchev--1646', 'i-laboratorio-de-wolfchev--1646'],
+    ['c-wolfchev--2240', 'i-laboratorio-de-wolfchev--2240'],
+    ['c-wolfchev--2236', 'i-laboratorio-de-wolfchev--2236'],
+    ['c-wolfchev--2235', 'i-laboratorio-de-wolfchev--2235'],
+    ['c-wolfchev--2238', 'i-laboratorio-de-wolfchev--2238'],
+    ['c-wolfchev--1649', 'i-laboratorio-de-wolfchev--1649'],
+    ['c-wolfchev--1650', 'i-laboratorio-de-wolfchev--1650'],
+    ['c-wolfchev--1651', 'i-laboratorio-de-wolfchev--1651'],
+    ['c-wolfchev--2241', 'i-laboratorio-de-wolfchev--2241'],
+    ['c-wolfchev--2237', 'i-laboratorio-de-wolfchev--2237'],
+    ['c-wolfchev--2239', 'i-laboratorio-de-wolfchev--2239'],
+    ['c-cor', 'i-ep17-1-memorial-cor'],
+    ['c-fortaleza', 'i-ep16-1-fortaleza-voadora'],
+    ['c-mors', 'i-ep14-3-caverna-de-mors']
+  ];
+  const LINK_MAP = {};
+  LINK_PAIRS.forEach(([idA, idB]) => {
+    (LINK_MAP[idA] = LINK_MAP[idA] || []).push(idB);
+    (LINK_MAP[idB] = LINK_MAP[idB] || []).push(idA);
+  });
+
+  function propagateLinkedChecks(sourceId, checked) {
+    const linkedIds = LINK_MAP[sourceId];
+    if (!linkedIds) return;
+    linkedIds.forEach(otherId => {
+      const row = document.querySelector('tr[data-id="' + otherId + '"]');
+      if (!row) return;
+      const cb = row.querySelector('.quest-check');
+      if (!cb || cb.checked === checked) return;
+      cb.checked = checked;
+      row.classList.toggle('is-done', checked);
+    });
+  }
+
   function applyBoardToUi(board) {
     const boardState = state[board.key];
     board.rows.forEach(row => {
@@ -3371,6 +3447,7 @@
 
       checkbox.addEventListener('change', () => {
         row.classList.toggle('is-done', checkbox.checked);
+        propagateLinkedChecks(row.dataset.id, checkbox.checked);
         scheduleSave(
           checkbox.checked ? 'Concluído e salvo.' : 'Marcação removida e salva.',
           checkbox,
@@ -3392,6 +3469,7 @@
       board.rows.filter(row => !row.classList.contains('is-hidden')).forEach(row => {
         row.querySelector('.quest-check').checked = true;
         row.classList.add('is-done');
+        propagateLinkedChecks(row.dataset.id, true);
       });
       scheduleSave('Itens visíveis marcados e salvos.');
     });
@@ -3401,6 +3479,7 @@
       board.rows.forEach(row => {
         row.querySelector('.quest-check').checked = false;
         row.classList.remove('is-done');
+        propagateLinkedChecks(row.dataset.id, false);
       });
       scheduleSave('Todas as marcações foram removidas.');
     });
