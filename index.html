@@ -541,6 +541,28 @@
       line-height: 1.55;
     }
 
+    .confirm-input {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 42px;
+      padding: 0 13px;
+      margin: -6px 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      color: var(--ink);
+      background: rgba(255,255,255,.055);
+      font: inherit;
+    }
+    .confirm-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,193,95,.13); }
+    .confirm-error {
+      margin: -4px 0 14px;
+      color: var(--red);
+      font-size: 12.5px;
+      line-height: 1.4;
+    }
+    .confirm-error[hidden] { display: none; }
+
     .confirm-actions {
       display: flex;
       gap: 10px;
@@ -1068,6 +1090,15 @@
       border-color: #9e6d3d;
       box-shadow: 0 0 0 3px rgba(158,109,61,.11);
     }
+    .confirm-input {
+      border: 1px solid rgba(128, 95, 61, 0.18);
+      color: #2f2318;
+      background: rgba(255,255,255,.88);
+    }
+    .confirm-input:focus {
+      border-color: #9e6d3d;
+      box-shadow: 0 0 0 3px rgba(158,109,61,.11);
+    }
 
     button {
       border: 1px solid rgba(128, 95, 61, 0.16);
@@ -1344,30 +1375,19 @@
   .note-card-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 9px 12px;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 6px 9px;
   }
-  .note-card-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    color: #6b4421;
-    white-space: nowrap;
-  }
-  .note-card-title svg { width: 13px; height: 13px; flex: none; }
-  .note-card-actions { display: flex; align-items: center; gap: 12px; }
+  .note-card-actions { display: flex; align-items: center; gap: 9px; opacity: .62; transition: opacity .15s ease; }
+  .note-card-actions:hover { opacity: 1; }
   .note-edit-link {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 10px;
+    gap: 3px;
+    font-size: 9px;
     font-weight: 800;
-    letter-spacing: .04em;
+    letter-spacing: .03em;
     text-transform: uppercase;
     color: #6b4421;
     background: none;
@@ -1377,22 +1397,22 @@
     font-family: inherit;
     white-space: nowrap;
   }
-  .note-edit-link svg { width: 12px; height: 12px; }
+  .note-edit-link svg { width: 10px; height: 10px; }
   .note-edit-link:hover { color: #4a2e17; }
   .note-edit-link[hidden] { display: none; }
   .note-collapse-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     border: none;
     background: none;
     color: #9c8a72;
     cursor: pointer;
     padding: 0;
   }
-  .note-collapse-btn svg { width: 16px; height: 16px; transition: transform .15s ease; }
+  .note-collapse-btn svg { width: 13px; height: 13px; transition: transform .15s ease; }
   .note-collapse-btn.is-collapsed svg { transform: rotate(180deg); }
   .note-card-body { border-top: 1px solid rgba(158,109,61,.18); }
   .note-card-body[hidden] { display: none; }
@@ -1450,20 +1470,20 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 6px;
+    gap: 9px;
     background: #fffdf9;
     border: 1px solid rgba(158,109,61,.28);
-    border-radius: 11px;
+    border-radius: 12px;
     box-shadow: 0 10px 24px rgba(76,52,26,.18);
-    padding: 7px;
+    padding: 10px 11px;
     z-index: 30;
   }
   .note-color-menu[hidden] { display: none; }
   .note-color-menu button {
     box-sizing: border-box;
     flex: none;
-    width: 15px;
-    height: 15px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     border: 1px solid rgba(0,0,0,.16);
     cursor: pointer;
@@ -1824,6 +1844,8 @@
 <div aria-live="polite" class="toast" id="toast" role="status"></div>
 <div aria-hidden="true" class="confirm-overlay" id="confirmOverlay"><div aria-labelledby="confirmMessage" aria-modal="true" class="confirm-box" role="alertdialog"><p class="confirm-message" id="confirmMessage"></p><div class="confirm-actions"><button class="confirm-cancel" id="confirmCancelBtn" type="button">Cancelar</button><button class="confirm-ok" id="confirmOkBtn" type="button">Confirmar</button></div></div></div>
 
+<div aria-hidden="true" class="confirm-overlay" id="linkOverlay"><div aria-labelledby="linkModalTitle" aria-modal="true" class="confirm-box" role="alertdialog"><p class="confirm-message" id="linkModalTitle">Inserir link</p><input class="confirm-input" id="linkModalInput" placeholder="https://exemplo.com" type="url"><p class="confirm-error" id="linkModalError" hidden>Use um link começando com http:// ou https://</p><div class="confirm-actions"><button class="confirm-cancel" id="linkModalCancelBtn" type="button">Cancelar</button><button class="confirm-ok" id="linkModalOkBtn" type="button">Inserir</button></div></div></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1984,6 +2006,52 @@
     });
   }
 
+  function showLinkModal() {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('linkOverlay');
+      const input = document.getElementById('linkModalInput');
+      const errorEl = document.getElementById('linkModalError');
+      const okBtn = document.getElementById('linkModalOkBtn');
+      const cancelBtn = document.getElementById('linkModalCancelBtn');
+      input.value = '';
+      errorEl.hidden = true;
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden', 'false');
+
+      function cleanup(result) {
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+        overlay.removeEventListener('click', onBackdrop);
+        input.removeEventListener('keydown', onInputKeydown);
+        document.removeEventListener('keydown', onKeydown);
+        resolve(result);
+      }
+      function trySubmit() {
+        const trimmed = input.value.trim();
+        if (!/^https?:\/\//i.test(trimmed) && !/^mailto:/i.test(trimmed)) {
+          errorEl.hidden = false;
+          input.focus();
+          return;
+        }
+        cleanup(trimmed);
+      }
+      function onOk() { trySubmit(); }
+      function onCancel() { cleanup(null); }
+      function onBackdrop(event) { if (event.target === overlay) cleanup(null); }
+      function onKeydown(event) { if (event.key === 'Escape') cleanup(null); }
+      function onInputKeydown(event) { if (event.key === 'Enter') { event.preventDefault(); trySubmit(); } }
+
+      okBtn.addEventListener('click', onOk);
+      cancelBtn.addEventListener('click', onCancel);
+      overlay.addEventListener('click', onBackdrop);
+      input.addEventListener('keydown', onInputKeydown);
+      document.addEventListener('keydown', onKeydown);
+      input.focus();
+    });
+  }
+
 
   function createFeedbackForControl(control, extraClass = '') {
     const feedback = document.createElement('span');
@@ -2091,9 +2159,7 @@
 
     const header = document.createElement('div');
     header.className = 'note-card-header';
-    header.innerHTML =
-      `<div class="note-card-title">${NOTE_ICONS.file}<span>${headerTitle}</span></div>` +
-      '<div class="note-card-actions"></div>';
+    header.innerHTML = '<div class="note-card-actions"></div>';
     const actionsEl = header.querySelector('.note-card-actions');
 
     const editLink = document.createElement('button');
@@ -2258,19 +2324,24 @@
 
     toolbar.querySelectorAll('button[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', event => event.preventDefault());
-      btn.addEventListener('click', () => {
-        editor.focus();
+      btn.addEventListener('click', async () => {
         const cmd = btn.dataset.cmd;
         if (cmd === 'link') {
-          const url = window.prompt('Endereço do link (https://...)');
-          if (!url) return;
-          const trimmed = url.trim();
-          if (!/^https?:\/\//i.test(trimmed) && !/^mailto:/i.test(trimmed)) {
-            window.alert('Use um link começando com http:// ou https://');
-            return;
+          const savedRange = (() => {
+            const sel = window.getSelection();
+            return sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+          })();
+          const url = await showLinkModal();
+          editor.focus();
+          if (savedRange) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
           }
-          document.execCommand('createLink', false, trimmed);
+          if (!url) return;
+          document.execCommand('createLink', false, url);
         } else {
+          editor.focus();
           document.execCommand(cmd, false, null);
         }
       });
