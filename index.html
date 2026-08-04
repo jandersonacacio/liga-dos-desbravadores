@@ -2244,6 +2244,33 @@
     editor.setAttribute('aria-label', ariaLabel + ' (editando)');
     editor.setAttribute('data-placeholder', options.placeholder || 'Escreva sua observação aqui...');
 
+    editor.addEventListener('paste', event => {
+      event.preventDefault();
+      const clipboard = event.clipboardData || window.clipboardData;
+      const html = clipboard ? clipboard.getData('text/html') : '';
+      let toInsert;
+      if (html) {
+        const stripContainer = document.createElement('div');
+        stripContainer.innerHTML = html;
+        stripContainer.querySelectorAll('[style]').forEach(el => {
+          const cleaned = (el.getAttribute('style') || '')
+            .replace(/background(-color)?\s*:[^;]*;?/gi, '')
+            .trim();
+          if (cleaned) el.setAttribute('style', cleaned);
+          else el.removeAttribute('style');
+        });
+        stripContainer.querySelectorAll('[bgcolor]').forEach(el => el.removeAttribute('bgcolor'));
+        toInsert = sanitizeNoteHtml(stripContainer.innerHTML);
+      } else {
+        const text = clipboard ? clipboard.getData('text/plain') || '' : '';
+        toInsert = text
+          .split(/\r\n|\r|\n/)
+          .map(line => line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'))
+          .join('<br>');
+      }
+      document.execCommand('insertHTML', false, toInsert);
+    });
+
     const footer = document.createElement('div');
     footer.className = 'note-editor-footer';
     const cancelBtn = document.createElement('button');
