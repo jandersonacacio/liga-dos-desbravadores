@@ -143,8 +143,35 @@
     .auth-fab.state-reconnect { border-color: #d99a3f; color: #b9791f; background: rgba(217, 154, 63, .16); }
     .auth-fab:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
+    .auth-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
+    .auth-fab.has-avatar svg { display: none; }
+    .auth-fab.has-avatar .auth-avatar { display: block; }
+
+    .auth-name-badge {
+      position: fixed;
+      top: 16px;
+      right: 68px;
+      z-index: 200;
+      max-width: 220px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--panel-solid);
+      border: 1px solid rgba(63, 157, 94, .35);
+      color: #2f8a52;
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.2;
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: none;
+    }
+    .auth-name-badge.is-visible { display: block; }
+
     @media (max-width: 760px) {
       .auth-fab { top: 10px; right: 10px; width: 38px; height: 38px; }
+      .auth-name-badge { top: 10px; right: 56px; font-size: 11px; padding: 7px 11px; max-width: 130px; }
     }
 
     .hero {
@@ -1758,8 +1785,10 @@
 
 </style></head>
 <body>
+<span class="auth-name-badge" id="authNameBadge"></span>
 <button aria-label="Entrar com Google" class="auth-fab state-out" id="authButton" title="Entrar com Google" type="button">
 <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20"><path d="M12 12c2.485 0 4.5-2.015 4.5-4.5S14.485 3 12 3 7.5 5.015 7.5 7.5 9.515 12 12 12Zm0 2.25c-3.004 0-9 1.508-9 4.5V21h18v-2.25c0-2.992-5.996-4.5-9-4.5Z" fill="currentColor"></path></svg>
+<img alt="" class="auth-avatar" id="authAvatar"/>
 </button>
 <div class="mvp-float mvp-1" data-slot="1" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
 <div class="mvp-float mvp-2" data-slot="2" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
@@ -2067,6 +2096,9 @@
   const syncStatus = document.getElementById('syncStatus');
   const syncText = document.getElementById('syncText');
   const authButton = document.getElementById('authButton');
+  const authAvatar = document.getElementById('authAvatar');
+  const authNameBadge = document.getElementById('authNameBadge');
+  if (authAvatar) authAvatar.addEventListener('error', () => authButton.classList.remove('has-avatar'));
   const toast = document.getElementById('toast');
   const formatter = new Intl.NumberFormat('pt-BR');
 
@@ -3196,6 +3228,27 @@
     setEditingEnabled(true);
 
     authButton.classList.remove('state-in', 'state-out', 'state-unavailable', 'state-reconnect');
+
+    // Foto e nome do Google aparecem sempre que há uma sessão ativa,
+    // independente do modo de armazenamento (dono, Drive ou reconectando).
+    if (user && (user.photoURL || user.displayName)) {
+      if (user.photoURL) {
+        authAvatar.src = user.photoURL;
+        authButton.classList.add('has-avatar');
+      } else {
+        authAvatar.removeAttribute('src');
+        authButton.classList.remove('has-avatar');
+      }
+      const label = user.displayName || user.email || '';
+      authNameBadge.textContent = label;
+      authNameBadge.title = label;
+      authNameBadge.classList.toggle('is-visible', Boolean(label));
+    } else {
+      authButton.classList.remove('has-avatar');
+      authAvatar.removeAttribute('src');
+      authNameBadge.textContent = '';
+      authNameBadge.classList.remove('is-visible');
+    }
 
     if (!auth) {
       authButton.classList.add('state-unavailable');
