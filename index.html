@@ -332,7 +332,8 @@
     tbody tr:hover { background: rgba(123, 100, 190, .10); }
     tbody tr:last-child td { border-bottom: 0; }
 
-    .check-cell { width: 74px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .check-cell { width: 84px; text-align: center; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 7px; }
+    .check-cell .field-save-feedback { flex-basis: 100%; order: 3; }
 
     .farm-toggle-btn {
       display: inline-flex;
@@ -358,6 +359,7 @@
       appearance: none;
       width: 25px;
       height: 25px;
+      flex-shrink: 0;
       margin: 0;
       border: 2px solid rgba(242,193,95,.65);
       border-radius: 5px;
