@@ -58,49 +58,10 @@
 
     a { color: inherit; }
 
-    .mvp-float {
-      position: absolute;
-      z-index: 50;
-      width: clamp(84px, 8.5vw, 132px);
-      padding: clamp(6px, .7vw, 10px) clamp(7px, .8vw, 12px);
-      border: 1px solid rgba(244, 203, 111, 0.3);
-      border-radius: 16px;
-      background: linear-gradient(145deg, rgba(43, 32, 74, .8), rgba(14, 23, 43, .8));
-      box-shadow: 0 12px 35px rgba(0,0,0,.35);
-      backdrop-filter: blur(8px);
-      color: #fff7dd;
-      text-align: center;
-      cursor: pointer;
-      user-select: none;
-      animation: floatBoss 5.5s ease-in-out infinite;
-      opacity: .52;
-      transition: opacity .2s ease, box-shadow .2s ease;
-    }
-
-    .mvp-float:hover, .mvp-float:focus-visible {
-      opacity: 1;
-      box-shadow: 0 16px 42px rgba(0,0,0,.5), 0 0 0 2px rgba(242,193,95,.55);
-      outline: none;
-    }
-
-    .mvp-float .sprite { display: grid; place-items: center; height: clamp(52px, 5.5vw, 82px); }
-    .mvp-float .sprite img { max-width: clamp(56px, 6vw, 88px); max-height: clamp(52px, 5.5vw, 82px); image-rendering: pixelated; filter: drop-shadow(0 5px 7px rgba(0,0,0,.45)); -webkit-user-drag: none; }
-    .mvp-float strong { display: block; margin-top: 3px; font: 700 clamp(10px, 1vw, 12px)/1.15 Georgia, serif; }
-
-    .mvp-1 { top: 16%; right: 33%; transform: rotate(-5deg); }
-    .mvp-2 { top: 16%; right: 24%; transform: rotate(5deg); animation-delay: -1.5s; }
-    .mvp-3 { top: 16%; right: 15%; transform: rotate(4deg); animation-delay: -2.6s; }
-    .mvp-4 { top: 16%; right: 6%; transform: rotate(-4deg); animation-delay: -3.7s; }
-
     .row-highlight { animation: rowFlash 1.7s ease; }
     @keyframes rowFlash {
       0% { background: rgba(242,193,95,.4); }
       100% { background: transparent; }
-    }
-
-    @keyframes floatBoss {
-      0%, 100% { translate: 0 0; }
-      50% { translate: 0 -10px; }
     }
 
     .app {
@@ -646,11 +607,10 @@
     .confirm-ok:hover { filter: brightness(1.08); }
 
     /* Detecta o APARELHO (celular/tablet com toque), não a largura da janela.
-       Some com os cards flutuantes e o ícone de espadas em qualquer celular ou
-       tablet, mesmo se a página estiver larga (ex.: tablet ou celular deitado),
-       diferente do bloco abaixo que só reage à largura da tela. */
+       Some com o ícone de espadas em qualquer celular ou tablet, mesmo se a
+       página estiver larga (ex.: tablet ou celular deitado), diferente do
+       bloco abaixo que só reage à largura da tela. */
     @media (hover: none) and (pointer: coarse) {
-      .mvp-float { display: none !important; }
       .hero::after { display: none; }
     }
 
@@ -658,7 +618,6 @@
       /* Reconhecimento de dispositivo móvel via viewport (funciona em qualquer
          navegador/aparelho: Chrome ou Safari, Android ou iPhone) — mantém o
          layout de computador intacto acima deste breakpoint. */
-      .mvp-float { display: none; }
 
       .app { width: min(100% - 18px, 1590px); margin-top: 10px; }
       body { font-size: 14px; }
@@ -1083,7 +1042,7 @@
       --panel: rgba(255, 253, 248, 0.96);
       --panel-2: rgba(249, 243, 233, 0.96);
       --panel-solid: #fffdf8;
-      --farmmap-tile: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20620%20520%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%236b4423%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%220.4%22%3E%3C%21--%20pinheiros%20espalhados%20em%20posicoes%20irregulares%20--%3E%3Cg%20transform%3D%22translate%2840%2C80%29%20scale%280.5%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28120%2C140%29%20scale%280.34%29%20rotate%28-4%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28300%2C60%29%20scale%280.44%29%20rotate%283%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28520%2C110%29%20scale%280.5%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28430%2C220%29%20scale%280.3%29%20rotate%286%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2860%2C330%29%20scale%280.4%29%20rotate%28-3%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28220%2C300%29%20scale%280.5%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28560%2C340%29%20scale%280.36%29%20rotate%284%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28350%2C420%29%20scale%280.46%29%20rotate%28-2%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28150%2C460%29%20scale%280.32%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3C%21--%20pequena%20montanha%20com%20vale%20--%3E%3Cpath%20d%3D%22M%20220%2C150%20L%20260%2C95%20L%20300%2C150%22%20opacity%3D%220.85%22%2F%3E%3Cpath%20d%3D%22M%20470%2C440%20L%20505%2C395%20L%20540%2C440%22%20opacity%3D%220.85%22%2F%3E%3C%21--%20nuvem%20--%3E%3Cg%20transform%3D%22translate%28210%2C420%29%20scale%280.55%29%22%3E%3Cpath%20d%3D%22M%20-60%2C10%20C%20-70%2C-18%20-35%2C-30%20-18%2C-16%20C%20-10%2C-38%2030%2C-38%2038%2C-14%20C%2062%2C-20%2078%2C4%2062%2C20%20C%2070%2C40%2044%2C50%2024%2C40%20C%208%2C54%20-30%2C52%20-38%2C32%20C%20-66%2C32%20-74%2C14%20-60%2C10%20Z%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28500%2C60%29%20scale%280.42%29%22%3E%3Cpath%20d%3D%22M%20-60%2C10%20C%20-70%2C-18%20-35%2C-30%20-18%2C-16%20C%20-10%2C-38%2030%2C-38%2038%2C-14%20C%2062%2C-20%2078%2C4%2062%2C20%20C%2070%2C40%2044%2C50%2024%2C40%20C%208%2C54%20-30%2C52%20-38%2C32%20C%20-66%2C32%20-74%2C14%20-60%2C10%20Z%22%2F%3E%3C%2Fg%3E%3C%21--%20morcego%20--%3E%3Cg%20transform%3D%22translate%28400%2C320%29%20scale%280.5%29%20rotate%286%29%22%3E%3Cpath%20d%3D%22M%200%2C-4%20C%20-14%2C-18%20-34%2C-18%20-44%2C-6%20C%20-34%2C-10%20-24%2C-6%20-16%2C0%20L%20-20%2C-10%20M%20-16%2C0%20C%20-10%2C-6%206%2C-6%2012%2C0%20M%2016%2C-6%20L%2012%2C0%20C%2020%2C-6%2030%2C-10%2044%2C-6%20C%2034%2C-18%2014%2C-18%200%2C-4%20Z%22%2F%3E%3C%2Fg%3E%3C%21--%20pegada%20%2F%20trilha%20--%3E%3Cg%20transform%3D%22translate%2860%2C220%29%20rotate%2820%29%22%20opacity%3D%220.6%22%3E%3Cellipse%20cx%3D%220%22%20cy%3D%220%22%20rx%3D%225%22%20ry%3D%227%22%2F%3E%3Cellipse%20cx%3D%2218%22%20cy%3D%22-4%22%20rx%3D%225%22%20ry%3D%227%22%2F%3E%3C%2Fg%3E%3C%21--%20pequeno%20dragao%20serpentino%20--%3E%3Cg%20transform%3D%22translate%28470%2C160%29%20scale%280.42%29%20rotate%28-4%29%22%3E%3Cpath%20d%3D%22M%200%2C20%20C%2012%2C4%2024%2C4%2032%2C18%20C%2040%2C32%2052%2C32%2058%2C18%22%2F%3E%3Cpath%20d%3D%22M%2014%2C10%20L%2018%2C2%20M%2040%2C10%20L%2044%2C2%22%2F%3E%3Cpath%20d%3D%22M%20-10%2C15%20L%200%2C20%20L%20-8%2C28%20Z%22%2F%3E%3Cpath%20d%3D%22M%2058%2C18%20L%2068%2C12%20L%2066%2C22%20Z%22%2F%3E%3C%2Fg%3E%3C%21--%20pequeno%20cavalo%20--%3E%3Cg%20transform%3D%22translate%28280%2C470%29%20scale%280.34%29%20rotate%282%29%22%3E%3Cpath%20d%3D%22M%2010%2C30%20C%204%2C20%2010%2C10%2022%2C7%20L%2034%2C2%20C%2040%2C-3%2048%2C-5%2054%2C-8%20L%2058%2C-13%20L%2055%2C-4%20L%2060%2C0%20L%2065%2C7%20L%2059%2C10%20L%2055%2C9%20C%2050%2C12%2046%2C10%2044%2C15%20L%2042%2C27%20C%2032%2C30%2018%2C30%2010%2C30%20Z%22%2F%3E%3Cpath%20d%3D%22M%2044%2C25%20L%2042%2C46%20M%2036%2C25%20L%2035%2C46%20M%2016%2C28%20L%2015%2C46%20M%2010%2C28%20L%209%2C46%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+      --farmmap-tile: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20620%20520%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%236b4423%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%220.4%22%3E%3C%21--%20pinheiros%20espalhados%20em%20posicoes%20irregulares%20--%3E%3Cg%20transform%3D%22translate%2840%2C80%29%20scale%280.5%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28120%2C140%29%20scale%280.34%29%20rotate%28-4%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28300%2C60%29%20scale%280.44%29%20rotate%283%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28520%2C110%29%20scale%280.5%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28430%2C220%29%20scale%280.3%29%20rotate%286%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2860%2C330%29%20scale%280.4%29%20rotate%28-3%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28220%2C300%29%20scale%280.5%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28560%2C340%29%20scale%280.36%29%20rotate%284%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28350%2C420%29%20scale%280.46%29%20rotate%28-2%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28150%2C460%29%20scale%280.32%29%22%3E%3Cpath%20d%3D%22M%200%2C0%20L%20-22%2C34%20L%2022%2C34%20Z%20M%200%2C-20%20L%20-16%2C10%20L%2016%2C10%20Z%20M%200%2C-38%20L%20-11%2C-8%20L%2011%2C-8%20Z%20M%20-3%2C34%20L%20-3%2C52%20L%203%2C52%20L%203%2C34%22%2F%3E%3C%2Fg%3E%3C%21--%20pequena%20cordilheira%20rochosa%20%28picos%20irregulares%2C%20sem%20forma%20de%20triangulo%29%20--%3E%3Cpath%20d%3D%22M%20218%2C150%20L%20232%2C120%20L%20240%2C133%20L%20250%2C101%20L%20258%2C118%20L%20268%2C108%20L%20278%2C131%20L%20286%2C116%20L%20300%2C150%22%20opacity%3D%220.85%22%2F%3E%3Cpath%20d%3D%22M%20220%2C150%20L%20228%2C138%20M%20254%2C113%20L%20260%2C124%20M%20278%2C131%20L%20284%2C122%22%20opacity%3D%220.5%22%2F%3E%3Cpath%20d%3D%22M%20468%2C440%20L%20480%2C412%20L%20487%2C424%20L%20497%2C396%20L%20505%2C413%20L%20515%2C404%20L%20524%2C426%20L%20532%2C412%20L%20540%2C440%22%20opacity%3D%220.85%22%2F%3E%3Cpath%20d%3D%22M%20470%2C440%20L%20477%2C428%20M%20501%2C410%20L%20507%2C421%20M%20524%2C426%20L%20529%2C418%22%20opacity%3D%220.5%22%2F%3E%3C%21--%20nuvem%20--%3E%3Cg%20transform%3D%22translate%28210%2C420%29%20scale%280.55%29%22%3E%3Cpath%20d%3D%22M%20-60%2C10%20C%20-70%2C-18%20-35%2C-30%20-18%2C-16%20C%20-10%2C-38%2030%2C-38%2038%2C-14%20C%2062%2C-20%2078%2C4%2062%2C20%20C%2070%2C40%2044%2C50%2024%2C40%20C%208%2C54%20-30%2C52%20-38%2C32%20C%20-66%2C32%20-74%2C14%20-60%2C10%20Z%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28500%2C60%29%20scale%280.42%29%22%3E%3Cpath%20d%3D%22M%20-60%2C10%20C%20-70%2C-18%20-35%2C-30%20-18%2C-16%20C%20-10%2C-38%2030%2C-38%2038%2C-14%20C%2062%2C-20%2078%2C4%2062%2C20%20C%2070%2C40%2044%2C50%2024%2C40%20C%208%2C54%20-30%2C52%20-38%2C32%20C%20-66%2C32%20-74%2C14%20-60%2C10%20Z%22%2F%3E%3C%2Fg%3E%3C%21--%20morcego%20--%3E%3Cg%20transform%3D%22translate%28400%2C320%29%20scale%280.5%29%20rotate%286%29%22%3E%3Cpath%20d%3D%22M%200%2C-4%20C%20-14%2C-18%20-34%2C-18%20-44%2C-6%20C%20-34%2C-10%20-24%2C-6%20-16%2C0%20L%20-20%2C-10%20M%20-16%2C0%20C%20-10%2C-6%206%2C-6%2012%2C0%20M%2016%2C-6%20L%2012%2C0%20C%2020%2C-6%2030%2C-10%2044%2C-6%20C%2034%2C-18%2014%2C-18%200%2C-4%20Z%22%2F%3E%3C%2Fg%3E%3C%21--%20pegada%20%2F%20trilha%20--%3E%3Cg%20transform%3D%22translate%2860%2C220%29%20rotate%2820%29%22%20opacity%3D%220.6%22%3E%3Cellipse%20cx%3D%220%22%20cy%3D%220%22%20rx%3D%225%22%20ry%3D%227%22%2F%3E%3Cellipse%20cx%3D%2218%22%20cy%3D%22-4%22%20rx%3D%225%22%20ry%3D%227%22%2F%3E%3C%2Fg%3E%3C%21--%20pequeno%20dragao%20serpentino%20--%3E%3Cg%20transform%3D%22translate%28470%2C160%29%20scale%280.42%29%20rotate%28-4%29%22%3E%3Cpath%20d%3D%22M%200%2C20%20C%2012%2C4%2024%2C4%2032%2C18%20C%2040%2C32%2052%2C32%2058%2C18%22%2F%3E%3Cpath%20d%3D%22M%2014%2C10%20L%2018%2C2%20M%2040%2C10%20L%2044%2C2%22%2F%3E%3Cpath%20d%3D%22M%20-10%2C15%20L%200%2C20%20L%20-8%2C28%20Z%22%2F%3E%3Cpath%20d%3D%22M%2058%2C18%20L%2068%2C12%20L%2066%2C22%20Z%22%2F%3E%3C%2Fg%3E%3C%21--%20pequeno%20cavalo%20--%3E%3Cg%20transform%3D%22translate%28280%2C470%29%20scale%280.34%29%20rotate%282%29%22%3E%3Cpath%20d%3D%22M%2010%2C30%20C%204%2C20%2010%2C10%2022%2C7%20L%2034%2C2%20C%2040%2C-3%2048%2C-5%2054%2C-8%20L%2058%2C-13%20L%2055%2C-4%20L%2060%2C0%20L%2065%2C7%20L%2059%2C10%20L%2055%2C9%20C%2050%2C12%2046%2C10%2044%2C15%20L%2042%2C27%20C%2032%2C30%2018%2C30%2010%2C30%20Z%22%2F%3E%3Cpath%20d%3D%22M%2044%2C25%20L%2042%2C46%20M%2036%2C25%20L%2035%2C46%20M%2016%2C28%20L%2015%2C46%20M%2010%2C28%20L%209%2C46%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");
       --ink: #2f2318;
       --muted: #7c6b5c;
       --gold: #9e6d3d;
@@ -1112,15 +1071,6 @@
       background-size: 24px 24px;
       background-position: 0 0, 0 0;
     }
-
-    .mvp-float {
-      border: 1px solid rgba(128, 95, 61, 0.18);
-      background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(246, 237, 224, .94));
-      box-shadow: 0 8px 22px rgba(73, 49, 27, 0.08);
-      color: #4a3522;
-      opacity: .72;
-    }
-    .mvp-float .sprite img { filter: drop-shadow(0 4px 6px rgba(81, 52, 24, 0.18)); }
 
     .hero {
       border: 1px solid rgba(128, 95, 61, 0.18);
@@ -1810,10 +1760,6 @@
 <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20"><path d="M12 12c2.485 0 4.5-2.015 4.5-4.5S14.485 3 12 3 7.5 5.015 7.5 7.5 9.515 12 12 12Zm0 2.25c-3.004 0-9 1.508-9 4.5V21h18v-2.25c0-2.992-5.996-4.5-9-4.5Z" fill="currentColor"></path></svg>
 <img alt="" class="auth-avatar" id="authAvatar"/>
 </button>
-<div class="mvp-float mvp-1" data-slot="1" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
-<div class="mvp-float mvp-2" data-slot="2" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
-<div class="mvp-float mvp-3" data-slot="3" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
-<div class="mvp-float mvp-4" data-slot="4" role="button" style="visibility:hidden" tabindex="0"><span class="sprite"><img alt="" class="sprite-real"/></span><strong></strong></div>
 <main class="app">
 <nav aria-label="Alternar quadro" class="side-tabs">
 <button aria-pressed="true" class="side-tab active" data-tab="desbravadores" type="button">
@@ -3404,69 +3350,9 @@
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.toggle('active', panel.dataset.panel === key);
       });
-      refreshFloatingMvps(key);
       if (key === 'farmmap') renderFarmMap();
     });
   });
-
-  // Cards flutuantes de MVP: sorteiam alvos aleatórios da lista da aba ativa
-  // e, ao clicar, levam até a posição da respectiva linha na página. Ficam
-  // parados no lugar (só balançando pela animação), sem opção de arrastar.
-  const mvpFloatEls = [...document.querySelectorAll('.mvp-float')];
-
-  // Limpa posições arrastadas salvas em sessões antigas (recurso removido).
-  try { sessionStorage.removeItem('liga_mvp_float_positions'); } catch (error) { /* ignore */ }
-
-  function pickRandom(arr, n) {
-    const copy = arr.slice();
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy.slice(0, n);
-  }
-
-  function refreshFloatingMvps(boardKey) {
-    if (!mvpFloatEls.length) return;
-    const board = boards.find(b => b.key === boardKey);
-    if (!board) return;
-    const candidates = board.rows.filter(row => row.querySelector('.boss-avatar img'));
-    const picks = pickRandom(candidates, mvpFloatEls.length);
-
-    mvpFloatEls.forEach((el, i) => {
-      const row = picks[i];
-      if (!row) {
-        el.style.visibility = 'hidden';
-        el.onclick = null;
-        el.onkeydown = null;
-        return;
-      }
-      const avatarImg = row.querySelector('.boss-avatar img');
-      const nameEl = row.querySelector('.boss-name');
-      const name = nameEl ? nameEl.textContent.trim() : 'MVP';
-      const floatImg = el.querySelector('img');
-      floatImg.src = avatarImg.src;
-      floatImg.alt = name;
-      el.querySelector('strong').textContent = name;
-      el.setAttribute('aria-label', 'Ir até ' + name + ' na lista');
-      el.style.visibility = 'visible';
-
-      const goToRow = () => {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        row.classList.remove('row-highlight');
-        void row.offsetWidth;
-        row.classList.add('row-highlight');
-        setTimeout(() => row.classList.remove('row-highlight'), 1700);
-      };
-      el.onclick = goToRow;
-      el.onkeydown = (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          goToRow();
-        }
-      };
-    });
-  }
 
   // Pares de missões que representam a MESMA instância/alvo, uma vez na aba
   // Desbravadores e outra na aba Instâncias. Marcar uma marca a outra também,
@@ -4056,7 +3942,6 @@
   });
 
   applyStateToUi();
-  refreshFloatingMvps('desbravadores');
   loadLocalPreview();
 })();
 </script></body>
