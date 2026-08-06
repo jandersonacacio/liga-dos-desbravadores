@@ -61,8 +61,8 @@
     .mvp-float {
       position: absolute;
       z-index: 50;
-      width: 132px;
-      padding: 10px 12px;
+      width: clamp(84px, 8.5vw, 132px);
+      padding: clamp(6px, .7vw, 10px) clamp(7px, .8vw, 12px);
       border: 1px solid rgba(244, 203, 111, 0.3);
       border-radius: 16px;
       background: linear-gradient(145deg, rgba(43, 32, 74, .8), rgba(14, 23, 43, .8));
@@ -70,8 +70,7 @@
       backdrop-filter: blur(8px);
       color: #fff7dd;
       text-align: center;
-      cursor: grab;
-      touch-action: none;
+      cursor: pointer;
       user-select: none;
       animation: floatBoss 5.5s ease-in-out infinite;
       opacity: .52;
@@ -84,17 +83,9 @@
       outline: none;
     }
 
-    .mvp-float.is-dragging {
-      cursor: grabbing;
-      z-index: 250;
-      opacity: 1;
-      animation-play-state: paused;
-      transition: none;
-    }
-
-    .mvp-float .sprite { display: grid; place-items: center; height: 82px; }
-    .mvp-float .sprite img { max-width: 88px; max-height: 82px; image-rendering: pixelated; filter: drop-shadow(0 5px 7px rgba(0,0,0,.45)); -webkit-user-drag: none; }
-    .mvp-float strong { display: block; margin-top: 3px; font: 700 12px/1.15 Georgia, serif; }
+    .mvp-float .sprite { display: grid; place-items: center; height: clamp(52px, 5.5vw, 82px); }
+    .mvp-float .sprite img { max-width: clamp(56px, 6vw, 88px); max-height: clamp(52px, 5.5vw, 82px); image-rendering: pixelated; filter: drop-shadow(0 5px 7px rgba(0,0,0,.45)); -webkit-user-drag: none; }
+    .mvp-float strong { display: block; margin-top: 3px; font: 700 clamp(10px, 1vw, 12px)/1.15 Georgia, serif; }
 
     .mvp-1 { top: 16%; right: 33%; transform: rotate(-5deg); }
     .mvp-2 { top: 16%; right: 24%; transform: rotate(5deg); animation-delay: -1.5s; }
@@ -3402,108 +3393,12 @@
   });
 
   // Cards flutuantes de MVP: sorteiam alvos aleatórios da lista da aba ativa
-  // e, ao clicar, levam até a posição da respectiva linha na página.
+  // e, ao clicar, levam até a posição da respectiva linha na página. Ficam
+  // parados no lugar (só balançando pela animação), sem opção de arrastar.
   const mvpFloatEls = [...document.querySelectorAll('.mvp-float')];
 
-  // Permite arrastar os cards flutuantes para o lado, caso estejam cobrindo
-  // algo que a pessoa queira ler. A posição escolhida fica salva só nesta
-  // aba/sessão do navegador (sessionStorage), voltando ao normal ao reabrir.
-  const MVP_POS_KEY = 'liga_mvp_float_positions';
-
-  function readMvpPositions() {
-    try {
-      return JSON.parse(sessionStorage.getItem(MVP_POS_KEY) || '{}');
-    } catch (error) {
-      return {};
-    }
-  }
-
-  function saveMvpPosition(slot, left, top) {
-    try {
-      const all = readMvpPositions();
-      all[slot] = { left, top };
-      sessionStorage.setItem(MVP_POS_KEY, JSON.stringify(all));
-    } catch (error) {
-      // Armazenamento indisponível (ex.: modo privado); apenas ignora.
-    }
-  }
-
-  function applySavedMvpPosition(el, slot) {
-    const saved = readMvpPositions()[slot];
-    if (!saved) return;
-    el.style.left = saved.left + 'px';
-    el.style.top = saved.top + 'px';
-    el.style.right = 'auto';
-    el.style.bottom = 'auto';
-  }
-
-  function makeMvpFloatDraggable(el) {
-    const slot = el.dataset.slot;
-    applySavedMvpPosition(el, slot);
-
-    let dragging = false;
-    let moved = false;
-    let startX = 0;
-    let startY = 0;
-    let startLeft = 0;
-    let startTop = 0;
-
-    el.addEventListener('pointerdown', (event) => {
-      if (event.button !== undefined && event.button !== 0) return;
-      dragging = true;
-      moved = false;
-      // getBoundingClientRect() é relativo à janela (viewport); como o card agora
-      // usa position: absolute (fica preso ao documento, não acompanha o scroll),
-      // somamos o scroll atual para converter em coordenadas do documento.
-      const rect = el.getBoundingClientRect();
-      startLeft = rect.left + window.scrollX;
-      startTop = rect.top + window.scrollY;
-      startX = event.clientX;
-      startY = event.clientY;
-      el.style.left = startLeft + 'px';
-      el.style.top = startTop + 'px';
-      el.style.right = 'auto';
-      el.style.bottom = 'auto';
-      el.classList.add('is-dragging');
-      try { el.setPointerCapture(event.pointerId); } catch (error) { /* ignore */ }
-    });
-
-    el.addEventListener('pointermove', (event) => {
-      if (!dragging) return;
-      const dx = event.clientX - startX;
-      const dy = event.clientY - startY;
-      if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
-      if (!moved) return;
-      const maxLeft = Math.max(4, document.documentElement.scrollWidth - el.offsetWidth - 4);
-      const maxTop = Math.max(4, document.documentElement.scrollHeight - el.offsetHeight - 4);
-      const newLeft = Math.min(Math.max(4, startLeft + dx), maxLeft);
-      const newTop = Math.min(Math.max(4, startTop + dy), maxTop);
-      el.style.left = newLeft + 'px';
-      el.style.top = newTop + 'px';
-    });
-
-    const endDrag = () => {
-      if (!dragging) return;
-      dragging = false;
-      el.classList.remove('is-dragging');
-      if (moved) {
-        saveMvpPosition(slot, parseFloat(el.style.left), parseFloat(el.style.top));
-        el.dataset.suppressClick = '1';
-      }
-    };
-    el.addEventListener('pointerup', endDrag);
-    el.addEventListener('pointercancel', endDrag);
-
-    el.addEventListener('click', (event) => {
-      if (el.dataset.suppressClick === '1') {
-        el.dataset.suppressClick = '';
-        event.stopImmediatePropagation();
-        event.preventDefault();
-      }
-    }, true);
-  }
-
-  mvpFloatEls.forEach(makeMvpFloatDraggable);
+  // Limpa posições arrastadas salvas em sessões antigas (recurso removido).
+  try { sessionStorage.removeItem('liga_mvp_float_positions'); } catch (error) { /* ignore */ }
 
   function pickRandom(arr, n) {
     const copy = arr.slice();
