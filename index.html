@@ -2643,6 +2643,10 @@
     });
 
     setValue(initialValue);
+    if (view.classList.contains('is-empty')) {
+      body.hidden = true;
+      collapseBtn.classList.add('is-collapsed');
+    }
 
     return {
       wrapper,
