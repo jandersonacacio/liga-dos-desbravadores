@@ -1335,31 +1335,39 @@
   }
   .farm-map-trail {
     position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 46px 24px 22px;
-    overflow-x: auto;
+    padding: 30px 22px 20px;
   }
-  .farm-map-trail::before {
-    content: '';
+  .farm-map-path {
     position: absolute;
-    left: 34px;
-    right: 34px;
-    top: 68px;
-    height: 0;
-    border-top: 3px dashed var(--gold);
-    opacity: .45;
+    top: 0;
+    left: 0;
     z-index: 0;
+    pointer-events: none;
+    overflow: visible;
   }
+  .farm-map-rows {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 46px;
+  }
+  .farm-map-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .farm-map-row--reverse { flex-direction: row-reverse; }
   .farm-map-stop {
     position: relative;
     z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex: 1 0 108px;
-    min-width: 108px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 150px;
     text-align: center;
   }
   .farm-map-badge {
@@ -1421,9 +1429,12 @@
     .general-notes { grid-template-columns: 1fr; }
     .note-cell { min-width: 0; }
     .mission-note { min-width: 0; }
-    .farm-map-trail { gap: 22px; padding: 40px 16px 18px; }
-    .farm-map-trail::before { display: none; }
-    .farm-map-stop { flex: 1 0 92px; min-width: 92px; }
+    .farm-map-trail { padding: 24px 12px 16px; }
+    .farm-map-rows { gap: 32px; }
+    .farm-map-row { gap: 10px; }
+    .farm-map-stop { max-width: 104px; }
+    .farm-map-icon-link { width: 48px; height: 48px; }
+    .farm-map-name { font-size: 11px; max-width: 96px; }
   }
 
   /* Retorno visual confirmado somente após a gravação no JSON do Drive */
@@ -2905,9 +2916,29 @@
     if (empty) empty.style.display = 'none';
     trail.hidden = false;
 
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const pathSvg = document.createElementNS(svgNS, 'svg');
+    pathSvg.setAttribute('class', 'farm-map-path');
+    trail.appendChild(pathSvg);
+
+    const rowsWrap = document.createElement('div');
+    rowsWrap.className = 'farm-map-rows';
+    trail.appendChild(rowsWrap);
+
+    const perRow = window.innerWidth <= 760 ? 2 : (window.innerWidth <= 1000 ? 3 : 4);
+    const anchors = [];
+
     validIds.forEach((id, index) => {
       const row = document.querySelector('.mission-row[data-id="' + CSS.escape(id) + '"]');
       const data = extractFarmStopData(row);
+
+      const rowIndex = Math.floor(index / perRow);
+      let rowEl = rowsWrap.children[rowIndex];
+      if (!rowEl) {
+        rowEl = document.createElement('div');
+        rowEl.className = 'farm-map-row' + (rowIndex % 2 === 1 ? ' farm-map-row--reverse' : '');
+        rowsWrap.appendChild(rowEl);
+      }
 
       const stop = document.createElement('div');
       stop.className = 'farm-map-stop';
@@ -2917,6 +2948,7 @@
       badge.textContent = farmOrdinal(index + 1);
       stop.appendChild(badge);
 
+      let anchorEl = badge;
       if (data.monsterImgSrc) {
         const iconLink = document.createElement(data.monsterHref ? 'a' : 'div');
         iconLink.className = 'farm-map-icon-link';
@@ -2932,6 +2964,7 @@
         img.loading = 'lazy';
         iconLink.appendChild(img);
         stop.appendChild(iconLink);
+        anchorEl = iconLink;
       }
 
       const nameEl = document.createElement(data.missionHref ? 'a' : 'span');
@@ -2952,9 +2985,66 @@
       removeBtn.addEventListener('click', () => toggleFarmMapItem(id));
       stop.appendChild(removeBtn);
 
-      trail.appendChild(stop);
+      rowEl.appendChild(stop);
+      anchors.push(anchorEl);
     });
+
+    requestAnimationFrame(() => drawFarmMapPath(trail, pathSvg, anchors));
   }
+
+  function drawFarmMapPath(trail, svg, anchorEls) {
+    if (!trail.isConnected || !anchorEls.length) return;
+    const trailRect = trail.getBoundingClientRect();
+    if (!trailRect.width || !trailRect.height) return;
+    svg.setAttribute('width', trailRect.width);
+    svg.setAttribute('height', trailRect.height);
+    svg.setAttribute('viewBox', '0 0 ' + trailRect.width + ' ' + trailRect.height);
+
+    const points = anchorEls.map(el => {
+      const r = el.getBoundingClientRect();
+      return {
+        x: r.left + r.width / 2 - trailRect.left,
+        y: r.top + r.height / 2 - trailRect.top
+      };
+    });
+
+    if (points.length < 2) {
+      svg.innerHTML = '';
+      return;
+    }
+
+    const padded = [points[0], ...points, points[points.length - 1]];
+    let d = 'M ' + points[0].x.toFixed(1) + ' ' + points[0].y.toFixed(1);
+    const tension = 2.2;
+    for (let i = 1; i < padded.length - 2; i++) {
+      const p0 = padded[i - 1];
+      const p1 = padded[i];
+      const p2 = padded[i + 1];
+      const p3 = padded[i + 2];
+      const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const vx1 = p2.x - p0.x, vy1 = p2.y - p0.y;
+      const len1 = Math.hypot(vx1, vy1) || 1;
+      const scale1 = Math.min(len1 / tension, segLen * 0.5);
+      const cp1x = p1.x + (vx1 / len1) * scale1;
+      const cp1y = p1.y + (vy1 / len1) * scale1;
+      const vx2 = p3.x - p1.x, vy2 = p3.y - p1.y;
+      const len2 = Math.hypot(vx2, vy2) || 1;
+      const scale2 = Math.min(len2 / tension, segLen * 0.5);
+      const cp2x = p2.x - (vx2 / len2) * scale2;
+      const cp2y = p2.y - (vy2 / len2) * scale2;
+      d += ' C ' + cp1x.toFixed(1) + ' ' + cp1y.toFixed(1) + ', ' + cp2x.toFixed(1) + ' ' + cp2y.toFixed(1) + ', ' + p2.x.toFixed(1) + ' ' + p2.y.toFixed(1);
+    }
+
+    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round" stroke-dasharray="9 8" opacity="0.55"/>';
+  }
+
+  let farmMapResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(farmMapResizeTimer);
+    farmMapResizeTimer = setTimeout(() => {
+      if (state.farmMap && state.farmMap.length) renderFarmMap();
+    }, 200);
+  });
 
   initFarmMapToggles();
 
