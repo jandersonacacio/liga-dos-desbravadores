@@ -744,7 +744,12 @@
 
     .side-tabs {
       position: sticky;
-      top: 14px;
+      /* 66px liberam espaço para o ícone/foto de login e a etiqueta do nome,
+         que ficam fixos no canto superior direito da tela (auth-fab e
+         auth-name-badge) — assim as abas nunca ficam por baixo deles, nem no
+         carregamento nem depois de rolar a página (mesmo valor nos dois
+         casos, para não "pular" ao começar a rolar). */
+      top: 66px;
       z-index: 40;
       display: flex;
       flex-direction: row;
@@ -752,7 +757,7 @@
       justify-content: center;
       gap: 8px;
       width: 100%;
-      margin: 0 auto 22px;
+      margin: 34px auto 22px;
       padding: 8px;
       border: 1px solid var(--line);
       border-radius: 18px;
@@ -827,7 +832,10 @@
          do texto — toques maiores e mais fáceis de acertar do que uma fileira
          apertada de 4 abas lado a lado. */
       .side-tabs {
-        top: 8px;
+        /* Mesma lógica do desktop: limpa o ícone/foto de login fixos no
+           canto (menores no celular, mas ainda presentes). */
+        top: 56px;
+        margin-top: 40px;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 6px;
