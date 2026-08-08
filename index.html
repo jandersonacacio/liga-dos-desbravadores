@@ -822,6 +822,29 @@
       color: var(--muted);
       max-width: 260px;
     }
+    .farm-goal-fireworks {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .firework-particle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      animation: fireworkBurst .95s ease-out forwards;
+      box-shadow: 0 0 6px 1px currentColor;
+    }
+    @keyframes fireworkBurst {
+      0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+      65% { opacity: 1; }
+      100% { transform: translate(-50%, -50%) translate(var(--fx), var(--fy)) scale(.35); opacity: 0; }
+    }
 
     /* Detecta o APARELHO (celular/tablet com toque), não a largura da janela.
        Some com o ícone de espadas em qualquer celular ou tablet, mesmo se a
@@ -2263,7 +2286,7 @@
 
 <div aria-hidden="true" class="confirm-overlay" id="cooldownReadyOverlay"><div aria-labelledby="cooldownReadyTitle" aria-modal="true" class="confirm-box cooldown-ready-box" role="alertdialog"><p class="confirm-message" id="cooldownReadyTitle">Já podem ser refeitas:</p><div class="cooldown-ready-list" id="cooldownReadyList"></div><div class="confirm-actions"><button class="confirm-ok" id="cooldownReadyOkBtn" type="button">OK</button></div></div></div>
 
-<div aria-hidden="true" aria-live="polite" class="farm-goal-toast" id="farmGoalToast"><div class="farm-goal-toast-inner"><span class="farm-goal-icon">🏆</span><strong>Meta cumprida!</strong><span>Você concluiu toda a rota do Mapa de Farm.</span></div></div>
+<div aria-hidden="true" aria-live="polite" class="farm-goal-toast" id="farmGoalToast"><div class="farm-goal-fireworks" id="farmGoalFireworks"></div><div class="farm-goal-toast-inner"><span class="farm-goal-icon">🏆</span><strong>Meta cumprida!</strong><span>Você concluiu toda a rota do Mapa de Farm.</span></div></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -3354,12 +3377,45 @@
     });
   }
 
+  const FIREWORK_COLORS = ['#f2c15f', '#e2574c', '#4fae67', '#4f8fe2', '#c46bd9'];
+
+  function spawnFireworks() {
+    const container = document.getElementById('farmGoalFireworks');
+    if (!container) return;
+    container.innerHTML = '';
+    const bursts = [
+      { count: 12, delay: 0 },
+      { count: 10, delay: 220 }
+    ];
+    bursts.forEach(burst => {
+      setTimeout(() => {
+        for (let i = 0; i < burst.count; i++) {
+          const angle = (Math.PI * 2 * i) / burst.count + (Math.random() * 0.5 - 0.25);
+          const distance = 65 + Math.random() * 75;
+          const fx = Math.cos(angle) * distance;
+          const fy = Math.sin(angle) * distance;
+          const particle = document.createElement('span');
+          particle.className = 'firework-particle';
+          particle.style.setProperty('--fx', fx.toFixed(1) + 'px');
+          particle.style.setProperty('--fy', fy.toFixed(1) + 'px');
+          const color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+          particle.style.background = color;
+          particle.style.color = color;
+          particle.style.animationDelay = (Math.random() * 0.12) + 's';
+          container.appendChild(particle);
+        }
+      }, burst.delay);
+    });
+    setTimeout(() => { container.innerHTML = ''; }, 1500);
+  }
+
   let farmGoalToastTimer = null;
   function showFarmGoalToast() {
     const el = document.getElementById('farmGoalToast');
     if (!el) return;
     clearTimeout(farmGoalToastTimer);
     el.classList.add('show');
+    spawnFireworks();
     farmGoalToastTimer = setTimeout(() => { el.classList.remove('show'); }, 2800);
   }
 
