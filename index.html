@@ -1646,27 +1646,6 @@
     max-width: 150px;
     text-align: center;
   }
-  .farm-map-drag-handle {
-    position: absolute;
-    top: -9px;
-    right: -2px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    cursor: grab;
-    touch-action: none;
-    box-shadow: 0 2px 6px rgba(73,49,27,.2);
-    z-index: 3;
-  }
-  .farm-map-drag-handle:hover { color: var(--gold); border-color: var(--gold); }
-  .farm-map-drag-handle:active { cursor: grabbing; }
   .farm-map-stop--dragging { opacity: .35; }
   .farm-map-stop--drop-target .farm-map-icon-link,
   .farm-map-stop--drop-target .farm-map-badge { outline: 2px dashed var(--gold); outline-offset: 3px; }
@@ -1705,7 +1684,12 @@
     margin-bottom: 7px;
     border: 2px solid var(--bg, #fff);
     box-shadow: 0 3px 8px rgba(73,49,27,.28);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
   }
+  .farm-map-badge:hover { box-shadow: 0 3px 8px rgba(73,49,27,.28), 0 0 0 3px rgba(158,109,61,.3); }
+  .farm-map-badge:active { cursor: grabbing; }
   .farm-map-icon-link {
     width: 58px;
     height: 58px;
@@ -3705,18 +3689,12 @@
       stop.className = 'farm-map-stop' + (data.completed ? ' farm-map-stop--done' : '');
       stop.dataset.id = id;
 
-      const dragHandle = document.createElement('button');
-      dragHandle.type = 'button';
-      dragHandle.className = 'farm-map-drag-handle';
-      dragHandle.setAttribute('aria-label', 'Arrastar para reordenar ' + (data.missionName || 'missão'));
-      dragHandle.title = 'Arrastar para reordenar';
-      dragHandle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1.3"></circle><circle cx="15" cy="6" r="1.3"></circle><circle cx="9" cy="12" r="1.3"></circle><circle cx="15" cy="12" r="1.3"></circle><circle cx="9" cy="18" r="1.3"></circle><circle cx="15" cy="18" r="1.3"></circle></svg>';
-      dragHandle.addEventListener('pointerdown', event => startFarmMapDrag(event, id, stop, dragHandle));
-      stop.appendChild(dragHandle);
-
       const badge = document.createElement('span');
       badge.className = 'farm-map-badge';
       badge.textContent = farmOrdinal(index + 1);
+      badge.setAttribute('aria-label', 'Arrastar para reordenar ' + (data.missionName || 'missão'));
+      badge.title = 'Arrastar para reordenar';
+      badge.addEventListener('pointerdown', event => startFarmMapDrag(event, id, stop, badge));
       stop.appendChild(badge);
 
       let anchorEl = badge;
