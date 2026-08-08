@@ -1646,6 +1646,51 @@
     max-width: 150px;
     text-align: center;
   }
+  .farm-map-drag-handle {
+    position: absolute;
+    top: -9px;
+    right: -2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: grab;
+    touch-action: none;
+    box-shadow: 0 2px 6px rgba(73,49,27,.2);
+    z-index: 3;
+  }
+  .farm-map-drag-handle:hover { color: var(--gold); border-color: var(--gold); }
+  .farm-map-drag-handle:active { cursor: grabbing; }
+  .farm-map-stop--dragging { opacity: .35; }
+  .farm-map-stop--drop-target .farm-map-icon-link,
+  .farm-map-stop--drop-target .farm-map-badge { outline: 2px dashed var(--gold); outline-offset: 3px; }
+  .farm-map-ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 6px;
+    border-radius: 14px;
+    background: var(--panel);
+    border: 2px solid var(--gold);
+    box-shadow: 0 8px 20px rgba(73,49,27,.35);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 999;
+    opacity: .95;
+  }
+  .farm-map-ghost img { width: 34px; height: 34px; border-radius: 9px; object-fit: contain; background: var(--bg, #fff); flex-shrink: 0; }
   .farm-map-badge {
     width: 26px;
     height: 26px;
@@ -3658,6 +3703,16 @@
 
       const stop = document.createElement('div');
       stop.className = 'farm-map-stop' + (data.completed ? ' farm-map-stop--done' : '');
+      stop.dataset.id = id;
+
+      const dragHandle = document.createElement('button');
+      dragHandle.type = 'button';
+      dragHandle.className = 'farm-map-drag-handle';
+      dragHandle.setAttribute('aria-label', 'Arrastar para reordenar ' + (data.missionName || 'missão'));
+      dragHandle.title = 'Arrastar para reordenar';
+      dragHandle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1.3"></circle><circle cx="15" cy="6" r="1.3"></circle><circle cx="9" cy="12" r="1.3"></circle><circle cx="15" cy="12" r="1.3"></circle><circle cx="9" cy="18" r="1.3"></circle><circle cx="15" cy="18" r="1.3"></circle></svg>';
+      dragHandle.addEventListener('pointerdown', event => startFarmMapDrag(event, id, stop, dragHandle));
+      stop.appendChild(dragHandle);
 
       const badge = document.createElement('span');
       badge.className = 'farm-map-badge';
@@ -3720,6 +3775,90 @@
     });
 
     requestAnimationFrame(() => drawFarmMapPath(trail, pathSvg, anchors));
+  }
+
+  let farmMapDrag = null;
+
+  function createFarmMapGhost(stopEl) {
+    const ghost = document.createElement('div');
+    ghost.className = 'farm-map-ghost';
+    const icon = stopEl.querySelector('.farm-map-icon-link img');
+    if (icon) {
+      const img = document.createElement('img');
+      img.src = icon.src;
+      img.alt = '';
+      ghost.appendChild(img);
+    }
+    const name = stopEl.querySelector('.farm-map-name');
+    const label = document.createElement('span');
+    label.textContent = name ? name.textContent : '';
+    ghost.appendChild(label);
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+
+  function moveFarmMapGhost(ghost, x, y) {
+    ghost.style.left = x + 'px';
+    ghost.style.top = y + 'px';
+  }
+
+  function clearFarmMapDropTarget() {
+    const prev = document.querySelector('.farm-map-stop--drop-target');
+    if (prev) prev.classList.remove('farm-map-stop--drop-target');
+  }
+
+  function onFarmMapDragPointerMove(event) {
+    if (!farmMapDrag) return;
+    event.preventDefault();
+    moveFarmMapGhost(farmMapDrag.ghost, event.clientX, event.clientY);
+    const el = document.elementFromPoint(event.clientX, event.clientY);
+    const targetStop = el ? el.closest('.farm-map-stop') : null;
+    clearFarmMapDropTarget();
+    if (targetStop && targetStop !== farmMapDrag.stopEl) {
+      targetStop.classList.add('farm-map-stop--drop-target');
+      farmMapDrag.targetId = targetStop.dataset.id;
+    } else {
+      farmMapDrag.targetId = null;
+    }
+  }
+
+  function onFarmMapDragPointerUp(event) {
+    if (!farmMapDrag) return;
+    const { id, ghost, stopEl, handle, targetId } = farmMapDrag;
+    try { handle.releasePointerCapture(event.pointerId); } catch (e) {}
+    handle.removeEventListener('pointermove', onFarmMapDragPointerMove);
+    handle.removeEventListener('pointerup', onFarmMapDragPointerUp);
+    handle.removeEventListener('pointercancel', onFarmMapDragPointerUp);
+    ghost.remove();
+    stopEl.classList.remove('farm-map-stop--dragging');
+    clearFarmMapDropTarget();
+    farmMapDrag = null;
+
+    if (targetId && targetId !== id) {
+      const fromIndex = state.farmMap.indexOf(id);
+      if (fromIndex === -1) return;
+      const working = state.farmMap.slice();
+      working.splice(fromIndex, 1);
+      const toIndex = working.indexOf(targetId);
+      if (toIndex === -1) return;
+      working.splice(toIndex, 0, id);
+      state.farmMap = working;
+      renderFarmMap();
+      scheduleSave('Ordem da rota atualizada.', null, true);
+    }
+  }
+
+  function startFarmMapDrag(event, id, stopEl, handle) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault();
+    const ghost = createFarmMapGhost(stopEl);
+    moveFarmMapGhost(ghost, event.clientX, event.clientY);
+    stopEl.classList.add('farm-map-stop--dragging');
+    farmMapDrag = { id, ghost, stopEl, handle, targetId: null };
+    try { handle.setPointerCapture(event.pointerId); } catch (e) {}
+    handle.addEventListener('pointermove', onFarmMapDragPointerMove);
+    handle.addEventListener('pointerup', onFarmMapDragPointerUp);
+    handle.addEventListener('pointercancel', onFarmMapDragPointerUp);
   }
 
   function drawFarmMapPath(trail, svg, anchorEls) {
