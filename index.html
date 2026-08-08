@@ -775,6 +775,54 @@
     }
     .cooldown-ready-name { font-weight: 700; font-size: 13px; color: var(--ink); }
 
+    .farm-goal-toast {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity .4s ease;
+    }
+    .farm-goal-toast.show { opacity: 1; }
+    .farm-goal-toast-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 30px 44px;
+      border-radius: 22px;
+      background: linear-gradient(160deg, rgba(255,253,249,.97), rgba(248,241,231,.97));
+      border: 2px solid rgba(242,193,95,.55);
+      box-shadow: 0 24px 70px rgba(70,45,21,.3);
+      text-align: center;
+      transform: scale(.8) translateY(12px);
+      transition: transform .45s cubic-bezier(.22,1.4,.36,1);
+    }
+    .farm-goal-toast.show .farm-goal-toast-inner { transform: scale(1) translateY(0); }
+    .farm-goal-icon {
+      font-size: 46px;
+      line-height: 1;
+      margin-bottom: 4px;
+      animation: farmGoalBounce 1.1s ease infinite;
+    }
+    @keyframes farmGoalBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .farm-goal-toast-inner strong {
+      font-size: 20px;
+      color: var(--gold-2);
+      font-family: Georgia, serif;
+    }
+    .farm-goal-toast-inner span {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 260px;
+    }
+
     /* Detecta o APARELHO (celular/tablet com toque), não a largura da janela.
        Some com o ícone de espadas em qualquer celular ou tablet, mesmo se a
        página estiver larga (ex.: tablet ou celular deitado), diferente do
@@ -2215,6 +2263,8 @@
 
 <div aria-hidden="true" class="confirm-overlay" id="cooldownReadyOverlay"><div aria-labelledby="cooldownReadyTitle" aria-modal="true" class="confirm-box cooldown-ready-box" role="alertdialog"><p class="confirm-message" id="cooldownReadyTitle">Já podem ser refeitas:</p><div class="cooldown-ready-list" id="cooldownReadyList"></div><div class="confirm-actions"><button class="confirm-ok" id="cooldownReadyOkBtn" type="button">OK</button></div></div></div>
 
+<div aria-hidden="true" aria-live="polite" class="farm-goal-toast" id="farmGoalToast"><div class="farm-goal-toast-inner"><span class="farm-goal-icon">🏆</span><strong>Meta cumprida!</strong><span>Você concluiu toda a rota do Mapa de Farm.</span></div></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -3304,6 +3354,15 @@
     });
   }
 
+  let farmGoalToastTimer = null;
+  function showFarmGoalToast() {
+    const el = document.getElementById('farmGoalToast');
+    if (!el) return;
+    clearTimeout(farmGoalToastTimer);
+    el.classList.add('show');
+    farmGoalToastTimer = setTimeout(() => { el.classList.remove('show'); }, 2800);
+  }
+
   function getCooldownCellById(id) {
     return document.querySelector('.cooldown-cell[data-cooldown-id="' + CSS.escape(id) + '"]');
   }
@@ -3471,6 +3530,15 @@
         const value = await showCooldownEntryModal(missionName, type, visual.spriteUrl, visual.spriteAlt);
         if (value) applyCooldownEntry(cell, value);
       }
+    }
+
+    if (checked && state.farmMap && state.farmMap.length) {
+      const allDone = state.farmMap.every(fid => {
+        const r = document.querySelector('.mission-row[data-id="' + CSS.escape(fid) + '"]');
+        const cb = r ? r.querySelector('.quest-check') : null;
+        return Boolean(cb && cb.checked);
+      });
+      if (allDone) showFarmGoalToast();
     }
 
     renderFarmMap();
